@@ -18,7 +18,7 @@ The collector enforces additional controls:
 - Correlation-focused logging with minimal metadata only.
 - Shared secrets and request signatures are never written to logs.
 
-For production, front the collector with API Management (or equivalent gateway/WAF) for durable, distributed throttling and policy enforcement.
+Future hardening option (post-PoC): front the collector with an API gateway/WAF layer (for example API Management) for durable, distributed throttling and policy enforcement.
 
 ## Recommended retention
 Use the shortest retention period that satisfies operational and security requirements. A typical baseline is:

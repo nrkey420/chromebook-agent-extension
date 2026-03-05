@@ -1,6 +1,11 @@
 # From Zero to Telemetry in Sentinel
 
 ## 1) Prerequisites
+
+### Deployment assumptions for this PoC
+- Azure region is fixed to **East US** (`eastus`).
+- Azure Functions hosting is fixed to **Consumption** (`Y1`).
+
 - Azure CLI + Monitor extension
 - .NET SDK 8
 - Azure Functions Core Tools v4
@@ -9,23 +14,23 @@
 ## 2) Deploy infrastructure
 ### Bash
 ```bash
-bash infra/scripts/deploy.sh <resource-group> <prefix> <location>
+bash infra/scripts/deploy.sh <resource-group> <prefix>
 ```
 
 ### PowerShell
 ```powershell
-pwsh infra/scripts/deploy.ps1 -ResourceGroup <rg> -Prefix <prefix> -Location <location>
+pwsh infra/scripts/deploy.ps1 -ResourceGroup <rg> -Prefix <prefix>
 ```
 
 ## 3) Create DCE/DCR for custom table stream
 ### Bash
 ```bash
-bash infra/scripts/create-dce-dcr.sh <rg> <location> <workspaceResourceId>
+bash infra/scripts/create-dce-dcr.sh <rg> eastus <workspaceResourceId>
 ```
 
 ### PowerShell
 ```powershell
-pwsh infra/scripts/create-dce-dcr.ps1 -ResourceGroup <rg> -Location <location> -WorkspaceResourceId <workspaceResourceId>
+pwsh infra/scripts/create-dce-dcr.ps1 -ResourceGroup <rg> -WorkspaceResourceId <workspaceResourceId>
 ```
 
 Capture:

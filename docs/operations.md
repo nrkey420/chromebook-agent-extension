@@ -1,5 +1,10 @@
 # Operations
 
+## Deployment assumptions (PoC)
+- Azure region: **East US** (`eastus`).
+- Azure Functions hosting plan: **Consumption** (`Y1`).
+- Premium plans, APIM, Front Door, and private endpoints are out of scope for this PoC; consider them only as future hardening options.
+
 ## Build and test
 ### Extension package
 - bash: `bash extension/tools/pack.sh`

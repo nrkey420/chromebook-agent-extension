@@ -76,6 +76,12 @@ Body:
 
 On success collector returns `202 Accepted`, writes raw JSONL to Blob Storage, and ingests normalized records via Logs Ingestion API.
 
+
+## PoC infrastructure assumptions
+- Azure region: **East US** (`eastus`).
+- Azure Functions plan: **Consumption** (`Y1`).
+- Premium plans, APIM, Front Door, and private endpoints are out of scope for the PoC and should be treated as future hardening options only.
+
 ## Quickstart
 - Architecture: `docs/architecture.md`
 - Operations checklist: `docs/operations.md`

@@ -40,7 +40,7 @@ Timestamp skew must be within ±300 seconds.
 - Batch events require `EventType` and `EventTime` fields.
 - Logs include correlation id and minimal request metadata only.
 
-For production, place Azure API Management (or equivalent) in front of the Function App for centralized, distributed throttling and policy enforcement.
+Future hardening option (post-PoC): add an API gateway/WAF layer (for example API Management) in front of the Function App for centralized, distributed throttling and policy enforcement.
 
 ## Build and test
 From `collector/`:
