@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "HmacKeys__default": "<base64-shared-secret>",
+    "HmacAllowedSkewSeconds": "300",
+    "RawContainerName": "raw-events",
+    "SentinelEndpoint": "https://<dce-name>.<region>-1.ingest.monitor.azure.com",
+    "SentinelDcrImmutableId": "<dcr-immutable-id>",
+    "SentinelStreamName": "Custom-ChromebookActivity_CL"
+  }
+}

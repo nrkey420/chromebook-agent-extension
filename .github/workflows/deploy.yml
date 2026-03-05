@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy infra
+        run: |
+          bash infra/scripts/deploy.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.DEPLOY_PREFIX }}" "${{ secrets.AZURE_LOCATION }}"
+      - name: Deploy function app
+        run: |
+          bash infra/scripts/deploy-function.sh "${{ secrets.AZURE_FUNCTION_APP_NAME }}" "${{ secrets.AZURE_RESOURCE_GROUP }}"

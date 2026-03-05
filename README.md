@@ -1,34 +1,81 @@
-# Chromebook Agent Extension (PoC)
+# Chromebook Activity PoC
 
-This repository contains a Manifest V3 Chrome extension under `extension/` for collecting lightweight Chromebook telemetry:
-- `NAVIGATION` events from browser history visits
-- `DOWNLOAD` events from download lifecycle hooks
-- `HEARTBEAT` events every 5 minutes
+End-to-end proof of concept for collecting Chromebook browser activity and ingesting into Microsoft Sentinel.
+
+## Repository layout
+- `extension/`: Manifest V3 Chrome extension.
+- `collector/`: Azure Functions (.NET 8 isolated) collector.
+- `infra/`: Bicep and deployment scripts.
+- `.github/workflows/`: CI/CD for build and deployment.
+- `docs/`: architecture, operations, and end-to-end validation.
+
+## Extension capabilities
+- Captures:
+  - `NAVIGATION` (`chrome.history.onVisited`)
+  - `DOWNLOAD` (`chrome.downloads.onCreated`, `onChanged`)
+  - `HEARTBEAT` every 5 minutes
+- Reads managed policy config from `chrome.storage.managed`.
+- Queues events in `chrome.storage.local`.
+- Flushes batches with exponential backoff retry.
+- Signs payloads using HMAC-SHA256 (`timestamp + "\n" + body`).
 
 ## Managed policy keys
-The extension reads configuration from `chrome.storage.managed`:
+Managed values expected by extension:
 - `collectorUrl` (string)
 - `keyId` (string)
-- `sharedSecret` (base64 string)
+- `sharedSecret` (base64)
 - `flushIntervalMs` (int, default `30000`)
 - `batchSize` (int, default `50`)
-- `debug` (boolean, default `false`)
+- `debug` (bool, default `false`)
 
-## Permissions
-The extension requests:
-- `history`, `downloads`, `storage`, `tabs`, `identity`, `enterprise.deviceAttributes`
+Sample policy object:
 
-Host permissions are currently set to `https://*/*` to simplify PoC testing. **For production, restrict to the exact collector origin only**.
+```json
+{
+  "collectorUrl": "https://<function-app>.azurewebsites.net",
+  "keyId": "default",
+  "sharedSecret": "<base64-secret>",
+  "flushIntervalMs": 30000,
+  "batchSize": 50,
+  "debug": true
+}
+```
 
-## Packaging
-- Bash: `extension/tools/pack.sh`
-- PowerShell: `extension/tools/pack.ps1`
+## Google Admin force-install + managed config
+1. Upload extension package (`extension/dist/*.zip`) to your trusted distribution path or use self-hosted update URL.
+2. In **Google Admin Console** → **Devices** → **Chrome** → **Apps & extensions** → **Users & browsers**:
+   - add extension by ID
+   - set install mode to **Force install**
+3. Set **Policy for extensions** / managed configuration JSON using the keys above.
+4. Verify on target Chromebook at `chrome://policy` and `chrome://extensions`.
 
-Both scripts create a zip in `extension/dist/` for upload/testing.
+## Collector API contract
+Endpoint: `POST /api/v1/chrome/events/batch`
 
-## How to test locally
-1. Prepare managed configuration in Chrome (or test build via temporary config policy tooling) with valid `collectorUrl`, `keyId`, and `sharedSecret`.
-2. Load unpacked extension from `extension/` at `chrome://extensions` (Developer mode enabled).
-3. Visit a few sites and trigger a sample download.
-4. Confirm queue/flush behavior in the service worker console (`chrome://extensions` → extension → *Service worker*).
-5. Optionally run packaging script and re-import the zip for distribution testing.
+Required headers:
+- `X-Key-Id`
+- `X-Timestamp` (unix seconds)
+- `X-Signature` (base64 HMAC-SHA256)
+- `X-Client`
+
+Body:
+```json
+{
+  "events": [
+    {
+      "type": "NAVIGATION",
+      "observedAt": "2026-01-01T00:00:00Z",
+      "payload": { "url": "https://example.com" },
+      "device": { "directoryDeviceId": "abc", "serialNumber": "xyz", "userEmail": "user@contoso.com" }
+    }
+  ]
+}
+```
+
+On success collector returns `202 Accepted`, writes raw JSONL to Blob Storage, and ingests normalized records via Logs Ingestion API.
+
+## Quickstart
+- Architecture: `docs/architecture.md`
+- Operations checklist: `docs/operations.md`
+- Full runbook: `docs/e2e/from-zero-to-sentinel.md`
+- Milestone plan: `IMPLEMENT.md`

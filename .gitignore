@@ -52,3 +52,9 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+# Function local config and packaging
+collector/src/ChromebookCollector/local.settings.json
+collector.zip
+
+# Extension packaging output
+extension/dist/
