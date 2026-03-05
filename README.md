@@ -1,65 +1,34 @@
-Create README.md that fully specifies the PoC.
+# Chromebook Agent Extension (PoC)
 
-Context:
-- Managed Chromebooks with student/staff signed-in accounts.
-- We need basic activity telemetry: navigation + downloads + heartbeat.
-- Collector must run in Azure, write raw to Azure Storage Account (Blob), and ingest to Microsoft Sentinel via Azure Monitor Logs Ingestion API (DCE/DCR).
-- User will manually create the Sentinel table, but we need everything else (collector, extension, infra, scripts).
+This repository contains a Manifest V3 Chrome extension under `extension/` for collecting lightweight Chromebook telemetry:
+- `NAVIGATION` events from browser history visits
+- `DOWNLOAD` events from download lifecycle hooks
+- `HEARTBEAT` events every 5 minutes
 
-Non-goals:
-- No full EDR, no keystroke capture, no content inspection.
-- No mTLS; HTTPS only.
+## Managed policy keys
+The extension reads configuration from `chrome.storage.managed`:
+- `collectorUrl` (string)
+- `keyId` (string)
+- `sharedSecret` (base64 string)
+- `flushIntervalMs` (int, default `30000`)
+- `batchSize` (int, default `50`)
+- `debug` (boolean, default `false`)
 
-Functional requirements:
-Extension (MV3):
-- Event types: NAVIGATION, DOWNLOAD, HEARTBEAT
-- Collect url/title/time, download metadata
-- Include directoryDeviceId and serialNumber where available via chrome.enterprise.deviceAttributes
-- Include userEmail when available via chrome.identity
-- Maintain local queue (chrome.storage.local) with at-least-once delivery and exponential backoff
-- Batch size 50, flush interval 30 seconds, jitter 0-5 seconds
-- Sign each batch with HMAC-SHA256 using a shared secret provisioned via managed storage policy
-- Add anti-replay: X-Timestamp + max skew 5 minutes
-- Include X-DeviceId (directoryDeviceId when available) and X-SessionId
+## Permissions
+The extension requests:
+- `history`, `downloads`, `storage`, `tabs`, `identity`, `enterprise.deviceAttributes`
 
-Collector (Azure Functions .NET 8 isolated):
-- Endpoints:
-  GET /api/health -> 200 {status:"ok"}
-  POST /api/v1/chrome/events/batch -> validates auth; writes to blob; ingests to Sentinel; returns 202
-- Authentication:
-  - Required headers: X-Timestamp, X-Signature, X-Key-Id
-  - HMAC over: timestamp + '\n' + requestBodyBytes (exact bytes)
-  - Secret lookup by X-Key-Id from app settings
-  - Reject if timestamp older than 5 minutes or signature mismatch
-- Blob layout:
-  container: chrome-activity-raw
-  path: yyyy/MM/dd/{keyId}/{directoryDeviceId or 'unknown'}/{hour}/events-{minute}-{guid}.jsonl
-- Sentinel ingest:
-  - Normalize each event into the schema expected by the custom table
-  - Use Logs Ingestion API with DCE endpoint + DCR immutable id + stream name
-  - On ingest failure: do not fail the request; record metrics/logs and still persist raw to blob
+Host permissions are currently set to `https://*/*` to simplify PoC testing. **For production, restrict to the exact collector origin only**.
 
-Infra:
-- Bicep to deploy:
-  - Storage account + container
-  - Function App (Consumption or Premium ok; choose Consumption for PoC)
-  - App Insights
-  - Key settings placeholders for HMAC secrets and DCE/DCR ids
-- Scripts:
-  - deploy-bicep
-  - create-dce-dcr (creates DCE + DCR, outputs ids)
-  - packaging scripts for extension zip
+## Packaging
+- Bash: `extension/tools/pack.sh`
+- PowerShell: `extension/tools/pack.ps1`
 
-Docs:
-- docs/architecture.md with dataflow diagram (ASCII ok)
-- docs/data-schema.md with event JSON examples and normalized record examples
-- docs/operations.md with rotation procedure for HMAC keys and incident triage pivots
-- docs/privacy-guardrails.md with minimization + retention guidance
+Both scripts create a zip in `extension/dist/` for upload/testing.
 
-Include “Quickstart” steps:
-1) Deploy infra
-2) Create DCE/DCR and set app settings
-3) Package extension
-4) Force-install via Google Admin and set managed storage (keyId + secret + collector URL)
-5) Verify ingestion end-to-end
-6) Run sample KQL hunts
+## How to test locally
+1. Prepare managed configuration in Chrome (or test build via temporary config policy tooling) with valid `collectorUrl`, `keyId`, and `sharedSecret`.
+2. Load unpacked extension from `extension/` at `chrome://extensions` (Developer mode enabled).
+3. Visit a few sites and trigger a sample download.
+4. Confirm queue/flush behavior in the service worker console (`chrome://extensions` → extension → *Service worker*).
+5. Optionally run packaging script and re-import the zip for distribution testing.

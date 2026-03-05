@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Chromebook Activity Telemetry",
+  "version": "0.1.0",
+  "description": "Collects basic navigation/download telemetry and forwards signed batches to a collector.",
+  "permissions": [
+    "history",
+    "downloads",
+    "storage",
+    "tabs",
+    "identity",
+    "enterprise.deviceAttributes"
+  ],
+  "host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "sw.js",
+    "type": "module"
+  },
+  "minimum_chrome_version": "114"
+}
