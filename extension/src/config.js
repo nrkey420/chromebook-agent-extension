@@ -4,7 +4,8 @@ const DEFAULTS = {
   sharedSecret: '',
   flushIntervalMs: 30_000,
   batchSize: 50,
-  debug: false
+  debug: false,
+  collectTitles: true
 };
 
 function clampInt(value, fallback, min, max) {
@@ -22,6 +23,7 @@ export async function loadConfig() {
     sharedSecret: typeof managed.sharedSecret === 'string' ? managed.sharedSecret : DEFAULTS.sharedSecret,
     flushIntervalMs: clampInt(managed.flushIntervalMs, DEFAULTS.flushIntervalMs, 5_000, 600_000),
     batchSize: clampInt(managed.batchSize, DEFAULTS.batchSize, 1, 500),
-    debug: Boolean(managed.debug)
+    debug: Boolean(managed.debug),
+    collectTitles: managed.collectTitles === undefined ? DEFAULTS.collectTitles : Boolean(managed.collectTitles)
   };
 }

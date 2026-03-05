@@ -26,6 +26,7 @@ Managed values expected by extension:
 - `sharedSecret` (base64)
 - `flushIntervalMs` (int, default `30000`)
 - `batchSize` (int, default `50`)
+- `collectTitles` (bool, default `true`)
 - `debug` (bool, default `false`)
 
 Sample policy object:
@@ -37,6 +38,7 @@ Sample policy object:
   "sharedSecret": "<base64-secret>",
   "flushIntervalMs": 30000,
   "batchSize": 50,
+  "collectTitles": true,
   "debug": true
 }
 ```
@@ -77,5 +79,6 @@ On success collector returns `202 Accepted`, writes raw JSONL to Blob Storage, a
 ## Quickstart
 - Architecture: `docs/architecture.md`
 - Operations checklist: `docs/operations.md`
+- Privacy guardrails: `docs/privacy-guardrails.md`
 - Full runbook: `docs/e2e/from-zero-to-sentinel.md`
 - Milestone plan: `IMPLEMENT.md`

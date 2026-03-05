@@ -28,6 +28,7 @@ var host = new HostBuilder()
 
         services.AddHttpClient<ISentinelIngestClient, SentinelIngestClient>();
         services.AddSingleton<IHmacAuth, HmacAuth>();
+        services.AddSingleton<IRequestRateLimiter, InMemoryTokenBucketRateLimiter>();
         services.AddSingleton<IPayloadNormalizer, PayloadNormalizer>();
         services.AddSingleton<IBlobWriter, BlobWriter>();
         services.AddHostedService<ContainerBootstrapHostedService>();

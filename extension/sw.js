@@ -19,6 +19,17 @@ function log(...args) {
   }
 }
 
+function getSafeConfigForLogs(config) {
+  return {
+    collectorUrl: config.collectorUrl,
+    keyId: config.keyId,
+    flushIntervalMs: config.flushIntervalMs,
+    batchSize: config.batchSize,
+    debug: config.debug,
+    collectTitles: config.collectTitles
+  };
+}
+
 function withJitter(ms, maxJitter = 5_000) {
   return ms + Math.floor(Math.random() * maxJitter);
 }
@@ -164,7 +175,7 @@ function scheduleHeartbeat() {
 
 async function init() {
   runtimeConfig = await loadConfig();
-  log('config loaded', runtimeConfig);
+  log('config loaded', getSafeConfigForLogs(runtimeConfig));
 
   scheduleFlush();
   scheduleHeartbeat();
@@ -180,7 +191,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
     changes.sharedSecret ||
     changes.flushIntervalMs ||
     changes.batchSize ||
-    changes.debug
+    changes.debug ||
+    changes.collectTitles
   ) {
     init().catch((error) => console.error('[telemetry-ext] reinit failed', error));
   }
@@ -189,10 +201,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.history.onVisited.addListener((historyItem) => {
   enqueueEvent('NAVIGATION', {
     url: historyItem.url,
-    title: historyItem.title || null,
-    lastVisitTime: historyItem.lastVisitTime ? new Date(historyItem.lastVisitTime).toISOString() : null,
-    visitCount: historyItem.visitCount ?? null,
-    typedCount: historyItem.typedCount ?? null
+    title: runtimeConfig?.collectTitles ? historyItem.title || null : null,
+    eventTimeUtc: historyItem.lastVisitTime ? new Date(historyItem.lastVisitTime).toISOString() : new Date().toISOString()
   }).catch((error) => log('history enqueue error', String(error)));
 });
 

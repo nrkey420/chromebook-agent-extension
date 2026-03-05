@@ -34,6 +34,14 @@ Accepted key sources:
 
 Timestamp skew must be within ±300 seconds.
 
+## Security controls
+- In-memory token bucket rate limiting is applied per `X-Key-Id` (PoC control).
+- Request payload size is limited to 1 MB.
+- Batch events require `EventType` and `EventTime` fields.
+- Logs include correlation id and minimal request metadata only.
+
+For production, place Azure API Management (or equivalent) in front of the Function App for centralized, distributed throttling and policy enforcement.
+
 ## Build and test
 From `collector/`:
 - `dotnet build src/ChromeCollector.FunctionApp/ChromeCollector.FunctionApp.csproj`
