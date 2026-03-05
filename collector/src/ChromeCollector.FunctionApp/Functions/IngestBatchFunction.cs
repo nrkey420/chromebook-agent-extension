@@ -11,12 +11,14 @@ namespace ChromeCollector.FunctionApp.Functions;
 
 public sealed class IngestBatchFunction(
     IHmacAuth hmacAuth,
+    IRequestRateLimiter rateLimiter,
     IPayloadNormalizer payloadNormalizer,
     IBlobWriter blobWriter,
     ISentinelIngestClient sentinelIngestClient,
     ILogger<IngestBatchFunction> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private const int MaxBodySizeBytes = 1_048_576;
 
     [Function("IngestBatch")]
     public async Task<HttpResponseData> Run(
@@ -33,10 +35,22 @@ public sealed class IngestBatchFunction(
             return await CreateErrorResponse(request, HttpStatusCode.BadRequest, "Missing required headers.", cancellationToken);
         }
 
+        if (!rateLimiter.TryConsume(keyId!))
+        {
+            logger.LogWarning("Rate limit exceeded for keyId {KeyId} correlationId {CorrelationId}.", keyId, correlationId);
+            return await CreateErrorResponse(request, (HttpStatusCode)429, "Rate limit exceeded.", cancellationToken);
+        }
+
         byte[] rawBytes;
         using (var ms = new MemoryStream())
         {
             await request.Body.CopyToAsync(ms, cancellationToken);
+            if (ms.Length > MaxBodySizeBytes)
+            {
+                logger.LogWarning("Payload too large for keyId {KeyId} correlationId {CorrelationId}.", keyId, correlationId);
+                return await CreateErrorResponse(request, HttpStatusCode.RequestEntityTooLarge, "Payload exceeds 1MB limit.", cancellationToken);
+            }
+
             rawBytes = ms.ToArray();
         }
 
@@ -55,9 +69,14 @@ public sealed class IngestBatchFunction(
             return await CreateErrorResponse(request, HttpStatusCode.BadRequest, "Invalid JSON payload.", cancellationToken);
         }
 
-        if (batch?.Events is null || batch.Events.Count == 0)
+        if (batch?.Events is null)
         {
             return await CreateErrorResponse(request, HttpStatusCode.BadRequest, "Batch must include at least one event.", cancellationToken);
+        }
+
+        if (!BatchSchemaValidator.TryValidate(batch, out var schemaError))
+        {
+            return await CreateErrorResponse(request, HttpStatusCode.BadRequest, schemaError ?? "Schema validation failed.", cancellationToken);
         }
 
         var rawLines = batch.Events.Select(e => JsonSerializer.Serialize(e, JsonOptions)).ToList();
@@ -73,6 +92,13 @@ public sealed class IngestBatchFunction(
         {
             logger.LogWarning("Only {Ingested} of {Total} records ingested to Sentinel for correlationId {CorrelationId}.", ingested, normalized.Count, correlationId);
         }
+
+        logger.LogInformation(
+            "Accepted batch correlationId {CorrelationId} keyId {KeyId} eventCount {EventCount} contentLength {ContentLength}.",
+            correlationId,
+            keyId,
+            batch.Events.Count,
+            rawBytes.Length);
 
         var response = request.CreateResponse(HttpStatusCode.Accepted);
         await response.WriteAsJsonAsync(new
