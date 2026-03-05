@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChromebookCollector", "src/ChromebookCollector/ChromebookCollector.csproj", "{0EBAA294-71F3-4E07-8B2A-7CB52916D0CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChromebookCollector.Tests", "tests/ChromebookCollector.Tests/ChromebookCollector.Tests.csproj", "{3A6E3570-BD9F-4C53-BAD0-E8B4D31D3E07}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EBAA294-71F3-4E07-8B2A-7CB52916D0CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EBAA294-71F3-4E07-8B2A-7CB52916D0CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EBAA294-71F3-4E07-8B2A-7CB52916D0CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EBAA294-71F3-4E07-8B2A-7CB52916D0CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A6E3570-BD9F-4C53-BAD0-E8B4D31D3E07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A6E3570-BD9F-4C53-BAD0-E8B4D31D3E07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A6E3570-BD9F-4C53-BAD0-E8B4D31D3E07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A6E3570-BD9F-4C53-BAD0-E8B4D31D3E07}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
