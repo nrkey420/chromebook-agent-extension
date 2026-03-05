@@ -1,0 +1,33 @@
+name: Build Extension
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Optional lightweight lint
+        run: |
+          node --version
+          # Lightweight structural check without requiring eslint config/dependencies.
+          node -e "const fs=require('fs'); const m=JSON.parse(fs.readFileSync('extension/manifest.json','utf8')); if(!m.manifest_version||!m.name){throw new Error('manifest.json missing required fields');} console.log('manifest.json sanity check passed');"
+
+      - name: Package extension directory
+        run: |
+          cd extension
+          zip -r ../extension.zip .
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-main
+          path: extension.zip
+          if-no-files-found: error
