@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "HMAC_KEYS__test-key": "<base64-secret>",
+    "HMAC_KEYS_JSON": "{\"fallback-key\":\"<base64-secret>\"}",
+    "DCE_ENDPOINT": "https://<your-dce>.<region>-1.ingest.monitor.azure.com",
+    "DCR_IMMUTABLE_ID": "dcr-xxxxxxxxxxxxxxxx",
+    "DCR_STREAM_NAME": "Custom-ChromeActivity_CL",
+    "LOGS_INGESTION_RESOURCE": "https://monitor.azure.com/"
+  }
+}
