@@ -3,6 +3,10 @@ set -euo pipefail
 
 RG=${1:?resource group}
 LOCATION=${2:-eastus}
+if [[ "$LOCATION" != "eastus" ]]; then
+  echo "This PoC is standardized on Azure region eastus. Override is not supported in this script."
+  exit 1
+fi
 WORKSPACE_ID=${3:?log analytics workspace resource id}
 DCE_NAME=${4:-chromebook-dce}
 DCR_NAME=${5:-chromebook-dcr}

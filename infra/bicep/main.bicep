@@ -1,4 +1,5 @@
-param location string = resourceGroup().location
+@description('PoC deployment region. Defaults to East US.')
+param location string = 'eastus'
 param prefix string
 param storageSku string = 'Standard_LRS'
 
@@ -18,6 +19,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: planName
   location: location
+  // PoC uses Azure Functions Consumption plan (Y1).
   sku: { name: 'Y1'; tier: 'Dynamic' }
   kind: 'functionapp'
 }

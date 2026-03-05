@@ -1,10 +1,14 @@
 param(
   [Parameter(Mandatory=$true)][string]$ResourceGroup,
-  [Parameter(Mandatory=$true)][string]$Location,
+  [string]$Location = "eastus",
   [Parameter(Mandatory=$true)][string]$WorkspaceResourceId,
   [string]$DceName = "chromebook-dce",
   [string]$DcrName = "chromebook-dcr"
 )
+
+if ($Location -ne "eastus") {
+  throw "This PoC is standardized on Azure region eastus. Override is not supported in this script."
+}
 
 $dceId = az monitor data-collection endpoint create -g $ResourceGroup -n $DceName -l $Location --public-network-access Enabled --query id -o tsv
 
