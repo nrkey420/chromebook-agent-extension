@@ -1,0 +1,11 @@
+CREATE INDEX IX_Sessions_DirectoryDeviceId_LastSeenUtc ON Sessions(DirectoryDeviceId, LastSeenUtc DESC);
+CREATE INDEX IX_Sessions_UserEmail_LastSeenUtc ON Sessions(UserEmail, LastSeenUtc DESC);
+CREATE INDEX IX_Sessions_InternalIp_LastSeenUtc ON Sessions(InternalIp, LastSeenUtc DESC);
+CREATE INDEX IX_Sessions_IsActive_LastSeenUtc ON Sessions(IsActive, LastSeenUtc DESC);
+CREATE INDEX IX_ActivityEvents_SessionId_EventTimeUtc ON ActivityEvents(SessionId, EventTimeUtc DESC);
+CREATE INDEX IX_ActivityEvents_UserEmail_EventTimeUtc ON ActivityEvents(UserEmail, EventTimeUtc DESC);
+CREATE INDEX IX_ActivityEvents_DirectoryDeviceId_EventTimeUtc ON ActivityEvents(DirectoryDeviceId, EventTimeUtc DESC);
+CREATE INDEX IX_ActivityEvents_Domain_EventTimeUtc ON ActivityEvents(Domain, EventTimeUtc DESC);
+CREATE INDEX IX_Devices_LastSeenUtc ON Devices(LastSeenUtc DESC);
+CREATE INDEX IX_Devices_LastKnownUserEmail ON Devices(LastKnownUserEmail);
+CREATE INDEX IX_SessionHeartbeats_SessionId_HeartbeatTimeUtc ON SessionHeartbeats(SessionId, HeartbeatTimeUtc DESC);

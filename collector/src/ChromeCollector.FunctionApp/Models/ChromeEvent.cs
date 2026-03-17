@@ -17,8 +17,23 @@ public sealed class ChromeEvent
     [JsonPropertyName("directoryDeviceId")]
     public string? DirectoryDeviceId { get; set; }
 
-    [JsonPropertyName("deviceSerial")]
+    [JsonPropertyName("serialNumber")]
     public string? DeviceSerial { get; set; }
+
+    [JsonPropertyName("internalIp")]
+    public string? InternalIp { get; set; }
+
+    [JsonPropertyName("internalIpConfidence")]
+    public string? InternalIpConfidence { get; set; }
+
+    [JsonPropertyName("publicIp")]
+    public string? PublicIp { get; set; }
+
+    [JsonPropertyName("orgUnit")]
+    public string? OrgUnit { get; set; }
+
+    [JsonPropertyName("school")]
+    public string? School { get; set; }
 
     [JsonPropertyName("url")]
     public string? Url { get; set; }
