@@ -5,7 +5,8 @@ const DEFAULTS = {
   flushIntervalMs: 30_000,
   batchSize: 50,
   debug: false,
-  collectTitles: true
+  collectTitles: true,
+  inactivityTimeoutMinutes: 20
 };
 
 function clampInt(value, fallback, min, max) {
@@ -24,6 +25,7 @@ export async function loadConfig() {
     flushIntervalMs: clampInt(managed.flushIntervalMs, DEFAULTS.flushIntervalMs, 5_000, 600_000),
     batchSize: clampInt(managed.batchSize, DEFAULTS.batchSize, 1, 500),
     debug: Boolean(managed.debug),
-    collectTitles: managed.collectTitles === undefined ? DEFAULTS.collectTitles : Boolean(managed.collectTitles)
+    collectTitles: managed.collectTitles === undefined ? DEFAULTS.collectTitles : Boolean(managed.collectTitles),
+    inactivityTimeoutMinutes: clampInt(managed.inactivityTimeoutMinutes, DEFAULTS.inactivityTimeoutMinutes, 5, 240)
   };
 }

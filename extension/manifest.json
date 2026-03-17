@@ -1,19 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Chromebook Activity Telemetry",
-  "version": "0.1.0",
-  "description": "Collects basic navigation/download telemetry and forwards signed batches to a collector.",
-  "permissions": [
-    "history",
-    "downloads",
-    "storage",
-    "tabs",
-    "identity",
-    "enterprise.deviceAttributes"
-  ],
-  "host_permissions": [
-    "https://*/*"
-  ],
+  "name": "Chromebook Session Attribution PoC",
+  "version": "0.2.0",
+  "description": "Managed Chromebook session attribution and browser telemetry PoC.",
+  "permissions": ["history", "downloads", "storage", "identity", "tabs", "enterprise.deviceAttributes"],
+  "host_permissions": ["https://collector.example.azurewebsites.net/*"],
   "background": {
     "service_worker": "sw.js",
     "type": "module"

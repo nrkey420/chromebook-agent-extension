@@ -30,6 +30,9 @@ var host = new HostBuilder()
         services.AddSingleton<IHmacAuth, HmacAuth>();
         services.AddSingleton<IRequestRateLimiter, InMemoryTokenBucketRateLimiter>();
         services.AddSingleton<IPayloadNormalizer, PayloadNormalizer>();
+        services.AddSingleton<IPublicIpResolver, PublicIpResolver>();
+        services.AddSingleton<ISessionAttributionService, SessionAttributionService>();
+        services.AddSingleton<ISqlWriter, SqlWriter>();
         services.AddSingleton<IBlobWriter, BlobWriter>();
         services.AddHostedService<ContainerBootstrapHostedService>();
     })
