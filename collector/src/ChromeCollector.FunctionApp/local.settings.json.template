@@ -4,6 +4,7 @@
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "HMAC_KEYS__test-key": "<base64-secret>",
+    "SQL_CONNECTION_STRING": "Server=tcp:<server>.database.windows.net,1433;Initial Catalog=<db>;Authentication=Active Directory Default;Encrypt=True;",
     "HMAC_KEYS_JSON": "{\"fallback-key\":\"<base64-secret>\"}",
     "DCE_ENDPOINT": "https://<your-dce>.<region>-1.ingest.monitor.azure.com",
     "DCR_IMMUTABLE_ID": "dcr-xxxxxxxxxxxxxxxx",

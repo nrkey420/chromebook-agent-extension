@@ -1,10 +1,11 @@
 // PoC infrastructure: Function App (Linux Consumption, .NET 8 isolated) + Storage + App Insights + Azure SQL.
-// Secrets (SQL admin password, SQL connection string, HMAC key) are stored in Key Vault. The Function App
-// reads them through Key Vault references resolved with its system-assigned managed identity.
+// Azure SQL uses Microsoft Entra-only authentication (no SQL logins or passwords). The Function App connects
+// with its system-assigned managed identity; its database user is created by infra/scripts/init-sql.*
+// (run as the Entra admin), because Bicep cannot create database users.
+// The HMAC key is stored in Key Vault and read through a Key Vault reference using the same identity.
 // Exception: AzureWebJobsStorage stays a plain app setting because `az functionapp deployment source
 // config-zip` on Linux Consumption parses it to upload the package. Moving to Flex Consumption allows an
 // identity-based storage connection with no key at all.
-// Follow-up (production): SQL auth via managed identity instead of the admin login.
 
 @minLength(3)
 @maxLength(20)
@@ -12,12 +13,18 @@ param prefix string = 'scpschrome'
 param environment string = 'poc'
 param location string = 'eastus'
 
-@description('SQL administrator login.')
-param sqlAdminLogin string = 'sqladminpoc'
+@description('Object ID of the Microsoft Entra user or group that administers Azure SQL (a group is recommended).')
+param sqlEntraAdminObjectId string
 
-@secure()
-@description('SQL administrator password (no default; pass at deploy time).')
-param sqlAdminPassword string
+@description('Display name / UPN of the SQL Entra admin (shown in the portal; must match the principal).')
+param sqlEntraAdminName string
+
+@allowed([
+  'User'
+  'Group'
+  'Application'
+])
+param sqlEntraAdminPrincipalType string = 'User'
 
 @secure()
 @description('Base64 HMAC shared secret for key id KEY1 (same value goes in the extension policy).')
@@ -86,11 +93,17 @@ resource sql 'Microsoft.Sql/servers@2023-08-01-preview' = {
   name: sqlServerName
   location: location
   properties: {
-    administratorLogin: sqlAdminLogin
-    administratorLoginPassword: sqlAdminPassword
     version: '12.0'
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
+    administrators: {
+      administratorType: 'ActiveDirectory'
+      login: sqlEntraAdminName
+      sid: sqlEntraAdminObjectId
+      tenantId: subscription().tenantId
+      principalType: sqlEntraAdminPrincipalType
+      azureADOnlyAuthentication: true
+    }
   }
 }
 
@@ -131,19 +144,8 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
 }
 
 var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${sa.name};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${sa.listKeys().keys[0].value}'
-var sqlConnectionString = 'Server=tcp:${sql.properties.fullyQualifiedDomainName},1433;Initial Catalog=${db.name};User ID=${sqlAdminLogin};Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
-
-resource sqlConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: kv
-  name: 'SqlConnectionString'
-  properties: { value: sqlConnectionString }
-}
-
-resource sqlAdminPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: kv
-  name: 'SqlAdminPassword'
-  properties: { value: sqlAdminPassword }
-}
+// No secret: the Function App authenticates with its system-assigned managed identity.
+var sqlConnectionString = 'Server=tcp:${sql.properties.fullyQualifiedDomainName},1433;Initial Catalog=${db.name};Authentication=Active Directory Managed Identity;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
 
 resource hmacKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: kv
@@ -171,7 +173,7 @@ resource func 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'FUNCTIONS_EXTENSION_VERSION', value: '~4' }
         { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'dotnet-isolated' }
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appi.properties.ConnectionString }
-        { name: 'SQL_CONNECTION_STRING', value: kvRef(sqlConnectionSecret.properties.secretUri) }
+        { name: 'SQL_CONNECTION_STRING', value: sqlConnectionString }
         { name: 'HMAC_KEYS__KEY1', value: kvRef(hmacKeySecret.properties.secretUri) }
         // WEBSITE_RUN_FROM_PACKAGE is set by `az functionapp deployment source config-zip` (Linux Consumption
         // does not support the value 1).

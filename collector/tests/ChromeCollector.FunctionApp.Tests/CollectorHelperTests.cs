@@ -1,6 +1,7 @@
 using ChromeCollector.FunctionApp.Models;
 using ChromeCollector.FunctionApp.Services;
 using FluentAssertions;
+using Microsoft.Data.SqlClient;
 
 namespace ChromeCollector.FunctionApp.Tests;
 
@@ -61,6 +62,18 @@ public class CollectorHelperTests
         EventEnricher.Enrich(e);
 
         e.Domain.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("Active Directory Managed Identity", SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)] // Azure (infra/bicep/main.bicep)
+    [InlineData("Active Directory Default", SqlAuthenticationMethod.ActiveDirectoryDefault)]                   // local dev (local.settings.json.template)
+    public void SqlClient_AcceptsEntraAuthenticationKeywords(string keyword, SqlAuthenticationMethod expected)
+    {
+        var builder = new SqlConnectionStringBuilder(
+            $"Server=tcp:example.database.windows.net,1433;Initial Catalog=db;Authentication={keyword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+
+        builder.Authentication.Should().Be(expected);
+        builder.Password.Should().BeEmpty();
     }
 
     [Fact]

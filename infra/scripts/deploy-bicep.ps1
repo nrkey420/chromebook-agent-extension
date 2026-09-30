@@ -1,24 +1,37 @@
 # Deploys infra/bicep/main.bicep.
-# Required: -SqlAdminPassword and -HmacKeyB64 (or env vars SQL_ADMIN_PASSWORD / HMAC_KEY_B64).
-# Generate an HMAC key: [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
-# (the same value goes in the extension's managed policy)
-# Optional: -KeyVaultAdminObjectId (defaults to the signed-in user) gets Key Vault Secrets Officer.
-# Secrets are stored in Key Vault; the Function App reads them via Key Vault references.
+# Required: -HmacKeyB64 (or env HMAC_KEY_B64); stored in Key Vault, and the same value goes in the extension policy.
+# Generate one: [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
+# Optional (default to the signed-in `az` user; required when running as a service principal):
+#   -SqlEntraAdminObjectId / -SqlEntraAdminName / -SqlEntraAdminType (User|Group|Application)
+#   -KeyVaultAdminObjectId (granted Key Vault Secrets Officer)
 param(
   [string]$ResourceGroup = 'rg-chromebook-poc',
   [string]$Location = 'eastus',
-  [string]$SqlAdminPassword = $env:SQL_ADMIN_PASSWORD,
   [string]$HmacKeyB64 = $env:HMAC_KEY_B64,
+  [string]$SqlEntraAdminObjectId = $env:SQL_ENTRA_ADMIN_OBJECT_ID,
+  [string]$SqlEntraAdminName = $env:SQL_ENTRA_ADMIN_NAME,
+  [string]$SqlEntraAdminType = $(if ($env:SQL_ENTRA_ADMIN_TYPE) { $env:SQL_ENTRA_ADMIN_TYPE } else { 'User' }),
   [string]$KeyVaultAdminObjectId = $env:KEYVAULT_ADMIN_OBJECT_ID
 )
 $ErrorActionPreference = 'Stop'
-if (-not $SqlAdminPassword) { throw 'Provide -SqlAdminPassword or set SQL_ADMIN_PASSWORD.' }
 if (-not $HmacKeyB64) { throw 'Provide -HmacKeyB64 or set HMAC_KEY_B64.' }
-if (-not $KeyVaultAdminObjectId) {
-  $KeyVaultAdminObjectId = az ad signed-in-user show --query id -o tsv 2>$null
-  if ($LASTEXITCODE -ne 0) { $KeyVaultAdminObjectId = '' }
+
+if (-not $SqlEntraAdminObjectId -or -not $KeyVaultAdminObjectId) {
+  $me = az ad signed-in-user show --query '{id:id, upn:userPrincipalName}' -o json 2>$null | ConvertFrom-Json
+  if ($LASTEXITCODE -ne 0) { $me = $null }
+  if ($me) {
+    if (-not $SqlEntraAdminObjectId) { $SqlEntraAdminObjectId = $me.id; if (-not $SqlEntraAdminName) { $SqlEntraAdminName = $me.upn } }
+    if (-not $KeyVaultAdminObjectId) { $KeyVaultAdminObjectId = $me.id }
+  }
 }
-$params = @("location=$Location", "sqlAdminPassword=$SqlAdminPassword", "hmacKey=$HmacKeyB64")
+if (-not $SqlEntraAdminObjectId -or -not $SqlEntraAdminName) {
+  throw 'Provide -SqlEntraAdminObjectId and -SqlEntraAdminName (could not read the signed-in user).'
+}
+
+$params = @(
+  "location=$Location", "hmacKey=$HmacKeyB64",
+  "sqlEntraAdminObjectId=$SqlEntraAdminObjectId", "sqlEntraAdminName=$SqlEntraAdminName", "sqlEntraAdminPrincipalType=$SqlEntraAdminType"
+)
 if ($KeyVaultAdminObjectId) { $params += "keyVaultAdminObjectId=$KeyVaultAdminObjectId" }
 az group create -n $ResourceGroup -l $Location | Out-Null
 az deployment group create -g $ResourceGroup -f infra/bicep/main.bicep `

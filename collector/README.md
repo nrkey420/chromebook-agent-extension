@@ -9,7 +9,9 @@
 1. Copy template settings:
    - Bash: `cp src/ChromeCollector.FunctionApp/local.settings.json.template src/ChromeCollector.FunctionApp/local.settings.json`
    - PowerShell: `Copy-Item src/ChromeCollector.FunctionApp/local.settings.json.template src/ChromeCollector.FunctionApp/local.settings.json`
-2. Fill in `HMAC_KEYS__<keyId>` and optional Sentinel settings.
+2. Fill in `HMAC_KEYS__<keyId>`, optional Sentinel settings, and optionally `SQL_CONNECTION_STRING`.
+   Azure SQL uses Microsoft Entra-only auth: locally use `Authentication=Active Directory Default` (picks up
+   `az login`); in Azure the app uses `Authentication=Active Directory Managed Identity`. Leave it unset to skip SQL.
 3. Start Azurite or set `AzureWebJobsStorage` to a real connection string.
 4. Run the Function host from `collector/src/ChromeCollector.FunctionApp`:
    - `func start`

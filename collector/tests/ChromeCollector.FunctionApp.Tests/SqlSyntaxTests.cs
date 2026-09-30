@@ -40,6 +40,17 @@ public class SqlSyntaxTests
             .Should().BeEquivalentTo(SchemaScripts().Select(s => (string)s[0]));
     }
 
+    [Fact]
+    public void GrantFunctionIdentityScript_Parses()
+    {
+        var repoRoot = Path.GetFullPath(Path.Combine(SqlDirectory, "..", "..", "..", ".."));
+        var path = Path.Combine(repoRoot, "infra", "scripts", "sql", "grant-function-identity.sql");
+        File.Exists(path).Should().BeTrue(path);
+        var sql = File.ReadAllText(path);
+        sql.Should().Contain("$(FunctionAppName)");
+        AssertParses(sql.Replace("$(FunctionAppName)", "scpschrome-func-poc"));
+    }
+
     [Theory]
     [InlineData(nameof(SqlWriter.InsertEventSql))]
     [InlineData(nameof(SqlWriter.UpsertDeviceSql))]
