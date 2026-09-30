@@ -1,5 +1,8 @@
 # From Zero to Telemetry in Sentinel
 
+This is the manual path. To deploy automatically from GitHub Actions on every merge to `main`, see
+`docs/github-actions-deploy.md` (it runs the same scripts).
+
 ## 1) Prerequisites
 
 ### Deployment assumptions for this PoC
