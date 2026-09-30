@@ -1,3 +1,4 @@
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using ChromeCollector.FunctionApp.Services;
 using Microsoft.Extensions.Configuration;
@@ -19,11 +20,14 @@ var host = new HostBuilder()
         services.AddSingleton(sp =>
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
-            var connectionString = configuration["AzureWebJobsStorage"]
-                ?? configuration.GetConnectionString("AzureWebJobsStorage")
-                ?? throw new InvalidOperationException("AzureWebJobsStorage must be configured.");
 
-            return new BlobServiceClient(connectionString);
+            // Connection string (local/Azurite) or identity-based (AzureWebJobsStorage__accountName on Azure).
+            var connectionString = configuration["AzureWebJobsStorage"];
+            if (!string.IsNullOrWhiteSpace(connectionString)) return new BlobServiceClient(connectionString);
+
+            var accountName = configuration["AzureWebJobsStorage:accountName"]
+                ?? throw new InvalidOperationException("Configure AzureWebJobsStorage or AzureWebJobsStorage__accountName.");
+            return new BlobServiceClient(new Uri($"https://{accountName}.blob.core.windows.net"), new DefaultAzureCredential());
         });
 
         services.AddHttpClient<ISentinelIngestClient, SentinelIngestClient>();
@@ -35,6 +39,7 @@ var host = new HostBuilder()
         services.AddSingleton<ISqlWriter, SqlWriter>();
         services.AddSingleton<IBlobWriter, BlobWriter>();
         services.AddHostedService<ContainerBootstrapHostedService>();
+
     })
     .Build();
 

@@ -39,7 +39,9 @@ public sealed class IngestBatchFunction(
             return await Error(request, HttpStatusCode.BadRequest, "Missing required headers", cancellationToken);
         }
 
-        if (!rateLimiter.TryConsume(keyId!)) return await Error(request, (HttpStatusCode)429, "Rate limit exceeded", cancellationToken);
+        TryGetHeader(request, "X-Device-Id", out var deviceHeader);
+        if (!rateLimiter.TryConsume($"{keyId}:{deviceHeader ?? "unknown"}"))
+            return await Error(request, (HttpStatusCode)429, "Rate limit exceeded", cancellationToken);
 
         await using var ms = new MemoryStream();
         await request.Body.CopyToAsync(ms, cancellationToken);
@@ -51,30 +53,57 @@ public sealed class IngestBatchFunction(
 
         ChromeBatch? batch;
         try { batch = JsonSerializer.Deserialize<ChromeBatch>(raw, JsonOptions); }
-        catch { return await Error(request, HttpStatusCode.BadRequest, "Invalid JSON", cancellationToken); }
+        catch (JsonException) { return await Error(request, HttpStatusCode.BadRequest, "Invalid JSON", cancellationToken); }
 
-        if (batch?.Events is null || batch.Events.Count == 0) return await Error(request, HttpStatusCode.BadRequest, "Batch empty", cancellationToken);
+        if (batch is null) return await Error(request, HttpStatusCode.BadRequest, "Batch empty", cancellationToken);
+        if (!BatchSchemaValidator.TryValidate(batch, out var schemaError))
+            return await Error(request, HttpStatusCode.BadRequest, schemaError ?? "Invalid batch", cancellationToken);
 
-        var deviceId = batch.Events.FirstOrDefault()?.DirectoryDeviceId ?? "unknown";
-        var rawPath = await blobWriter.WriteJsonLinesAsync(BlobWriter.RawContainer, batch.Events.Select(e => JsonSerializer.Serialize(e)), $"{keyId}/{deviceId}", cancellationToken);
+        // Raw copy first: it is the system of record and allows replay if SQL is unavailable.
+        var deviceId = batch.Events.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.DirectoryDeviceId))?.DirectoryDeviceId ?? "unknown";
+        var rawPath = await blobWriter.WriteJsonLinesAsync(
+            BlobWriter.RawContainer,
+            batch.Events.Select(e => JsonSerializer.Serialize(e, JsonOptions)),
+            $"{BlobWriter.SafeSegment(keyId!)}/{BlobWriter.SafeSegment(deviceId)}",
+            cancellationToken);
 
-        var clientIp = request.Headers.TryGetValues("X-Forwarded-For", out var xff) ? xff.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim() : null;
         var publicIp = publicIpResolver.Resolve(request);
-        var normalized = batch.Events.Select(e => payloadNormalizer.Normalize(e, keyId!, clientIp, publicIp, sessionAttributionService.CalculateConfidence(e))).ToList();
-
-        await blobWriter.WriteJsonLinesAsync(BlobWriter.NormalizedContainer, normalized.Select(n => JsonSerializer.Serialize(n)), $"{keyId}/{deviceId}", cancellationToken);
+        foreach (var e in batch.Events) EventEnricher.Enrich(e);
 
         var sqlWrites = 0;
-        try { sqlWrites = await sqlWriter.WriteAsync(batch.Events, publicIp, correlationId, cancellationToken); }
-        catch (Exception ex) { await sqlWriter.LogErrorAsync(correlationId, "SQL", "WRITE_FAILED", ex.Message, null, cancellationToken); }
+        if (sqlWriter.IsEnabled)
+        {
+            try
+            {
+                sqlWrites = await sqlWriter.WriteAsync(batch.Events, publicIp, correlationId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "SQL write failed correlationId {corr}", correlationId);
+                await sqlWriter.LogErrorAsync(correlationId, "SQL", "WRITE_FAILED", ex.Message, rawPath, cancellationToken);
+                // Ask the extension to retry; EventId de-duplication makes the retry safe.
+                return await Error(request, HttpStatusCode.ServiceUnavailable, "Storage temporarily unavailable", cancellationToken);
+            }
+        }
 
         var sentinelWrites = 0;
-        try { sentinelWrites = await sentinelIngestClient.TryIngestAsync(normalized, cancellationToken); }
-        catch (Exception ex) { await sqlWriter.LogErrorAsync(correlationId, "Sentinel", "INGEST_FAILED", ex.Message, null, cancellationToken); }
+        try
+        {
+            var normalized = batch.Events
+                .Select(e => payloadNormalizer.Normalize(e, keyId!, publicIp, sessionAttributionService.CalculateConfidence(e)))
+                .ToList();
+            sentinelWrites = await sentinelIngestClient.TryIngestAsync(normalized, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Sentinel ingest failed correlationId {corr}", correlationId);
+            await sqlWriter.LogErrorAsync(correlationId, "Sentinel", "INGEST_FAILED", ex.Message, rawPath, cancellationToken);
+        }
 
         var response = request.CreateResponse(HttpStatusCode.Accepted);
-        await response.WriteAsJsonAsync(new { accepted = batch.Events.Count, blobPath = rawPath, sqlWrites, sentinelWrites, correlationId }, cancellationToken);
-        logger.LogInformation("Accepted {count} events correlationId {corr}", batch.Events.Count, correlationId);
+        await response.WriteAsJsonAsync(new { accepted = batch.Events.Count, sqlWrites, sentinelWrites, correlationId }, cancellationToken);
+        response.StatusCode = HttpStatusCode.Accepted;
+        logger.LogInformation("Accepted {count} events ({sql} new in SQL) correlationId {corr}", batch.Events.Count, sqlWrites, correlationId);
         return response;
     }
 
@@ -90,6 +119,8 @@ public sealed class IngestBatchFunction(
     {
         var r = req.CreateResponse(code);
         await r.WriteAsJsonAsync(new { error = message }, ct);
+        // WriteAsJsonAsync resets the status to 200; restore it.
+        r.StatusCode = code;
         return r;
     }
 }
