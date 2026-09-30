@@ -20,6 +20,9 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy infra
+        env:
+          SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+          HMAC_KEY_B64: ${{ secrets.HMAC_KEY_B64 }}
         run: |
           bash infra/scripts/deploy-bicep.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.AZURE_LOCATION }}"
       - name: Deploy function app
