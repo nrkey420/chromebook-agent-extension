@@ -1,5 +1,6 @@
 -- Investigation views: every view joins extension data with Google device and user data,
--- so investigators get serial/asset/location/student name/student ID on every row.
+-- so investigators get serial/asset/location/student ID on every row. No names are stored or shown;
+-- authorized staff resolve IDs to people in the student information system.
 -- Local-time columns use ReportingSettings.ReportingTimeZone (Windows time zone name).
 
 CREATE OR ALTER FUNCTION dbo.fn_ToLocal (@utc datetime2)
@@ -38,7 +39,6 @@ SELECT
   d.MacAddress,
   d.EthernetMacAddress,
   COALESCE(d.ExtLastUserEmail, ru.UserEmail) AS LastUserEmail,
-  u.FullName AS LastUserFullName,
   u.StudentId AS LastUserStudentId,
   d.GoogleLastSyncUtc,
   dbo.fn_ToLocal(d.GoogleLastSyncUtc) AS GoogleLastSyncLocal,
@@ -65,9 +65,6 @@ CREATE OR ALTER VIEW dbo.vw_Users
 AS
 SELECT
   u.UserEmail,
-  u.FullName,
-  u.GivenName,
-  u.FamilyName,
   u.StudentId,
   u.OrgUnitPath AS UserOrgUnit,
   u.IsSuspended,
@@ -112,7 +109,6 @@ SELECT
     WHEN gl.UserEmail IS NOT NULL THEN 'INFERRED_FROM_GOOGLE_LOGIN'
     ELSE NULL
   END AS UserSource,
-  u.FullName AS UserFullName,
   u.StudentId,
   o.SessionId
 FROM dbo.IpObservations o
@@ -203,7 +199,6 @@ SELECT
   l.Source,
   l.LoginEvent,
   l.UserEmail,
-  u.FullName AS UserFullName,
   u.StudentId,
   u.OrgUnitPath AS UserOrgUnit,
   l.DirectoryDeviceId,
@@ -238,7 +233,6 @@ SELECT
   a.EventTimeUtc,
   dbo.fn_ToLocal(a.EventTimeUtc) AS EventTimeLocal,
   a.UserEmail,
-  u.FullName AS UserFullName,
   u.StudentId,
   u.OrgUnitPath AS UserOrgUnit,
   a.Domain,
@@ -266,7 +260,6 @@ SELECT
   a.EventTimeUtc,
   dbo.fn_ToLocal(a.EventTimeUtc) AS EventTimeLocal,
   a.UserEmail,
-  u.FullName AS UserFullName,
   u.StudentId,
   u.OrgUnitPath AS UserOrgUnit,
   a.SearchEngine,
@@ -291,7 +284,6 @@ SELECT
   a.EventTimeUtc,
   dbo.fn_ToLocal(a.EventTimeUtc) AS EventTimeLocal,
   a.UserEmail,
-  u.FullName AS UserFullName,
   u.StudentId,
   a.DownloadFileName,
   a.DownloadMime,
@@ -319,7 +311,6 @@ SELECT
   CAST('EXTENSION' AS nvarchar(32)) AS Source,
   CAST(a.EventType AS nvarchar(128)) AS EventType,
   a.UserEmail,
-  u.FullName AS UserFullName,
   u.StudentId,
   u.OrgUnitPath AS UserOrgUnit,
   a.DirectoryDeviceId,
@@ -345,7 +336,6 @@ SELECT
   CAST('GOOGLE_' + UPPER(e.Application) AS nvarchar(32)),
   e.EventName,
   COALESCE(e.UserEmail, e.ActorEmail),
-  u.FullName,
   u.StudentId,
   u.OrgUnitPath,
   e.DirectoryDeviceId,

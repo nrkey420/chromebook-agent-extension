@@ -26,7 +26,6 @@ BEGIN
     h.AssetId,
     h.AnnotatedLocation,
     h.UserEmail,
-    h.UserFullName,
     h.StudentId,
     h.UserSource,
     h.Source AS IpSource,
@@ -42,7 +41,7 @@ BEGIN
   GROUP BY
     CASE WHEN h.InternalIp = @Ip THEN 'INTERNAL' ELSE 'PUBLIC' END,
     h.DirectoryDeviceId, h.SerialNumber, h.AssetId, h.AnnotatedLocation,
-    h.UserEmail, h.UserFullName, h.StudentId, h.UserSource, h.Source
+    h.UserEmail, h.StudentId, h.UserSource, h.Source
   ORDER BY ClosestSecondsFromTarget;
 
   SELECT l.*

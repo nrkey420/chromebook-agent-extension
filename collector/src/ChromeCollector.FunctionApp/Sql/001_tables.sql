@@ -93,14 +93,12 @@ CREATE TABLE dbo.GoogleDeviceActiveTime (
 );
 GO
 
--- Google Workspace users (students and staff).
+-- Google Workspace users (students and staff), keyed by the account email, which is an internal ID number.
+-- No names are stored here: authorized staff resolve an ID to a person in the student information system.
 IF OBJECT_ID('dbo.GoogleUsers', 'U') IS NULL
 CREATE TABLE dbo.GoogleUsers (
   UserEmail nvarchar(320) NOT NULL PRIMARY KEY,
   GoogleUserId nvarchar(64) NULL,
-  FullName nvarchar(256) NULL,
-  GivenName nvarchar(128) NULL,
-  FamilyName nvarchar(128) NULL,
   OrgUnitPath nvarchar(512) NULL,
   StudentId nvarchar(128) NULL,
   IsSuspended bit NULL,
@@ -111,6 +109,10 @@ CREATE TABLE dbo.GoogleUsers (
   RefreshedUtc datetime2 NOT NULL
 );
 GO
+-- Remove name columns from databases created by an earlier version of this script.
+IF COL_LENGTH('dbo.GoogleUsers', 'FullName') IS NOT NULL ALTER TABLE dbo.GoogleUsers DROP COLUMN FullName;
+IF COL_LENGTH('dbo.GoogleUsers', 'GivenName') IS NOT NULL ALTER TABLE dbo.GoogleUsers DROP COLUMN GivenName;
+IF COL_LENGTH('dbo.GoogleUsers', 'FamilyName') IS NOT NULL ALTER TABLE dbo.GoogleUsers DROP COLUMN FamilyName;
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_GoogleUsers_StudentId')
   CREATE INDEX IX_GoogleUsers_StudentId ON dbo.GoogleUsers (StudentId);
 GO
