@@ -35,7 +35,7 @@ Accepted key sources:
 Timestamp skew must be within ±300 seconds.
 
 ## Security controls
-- In-memory token bucket rate limiting is applied per `X-Key-Id` (PoC control).
+- In-memory token bucket rate limiting is applied per `X-Key-Id` + `X-Device-Id` (PoC control; the fleet shares one key).
 - Request payload size is limited to 1 MB.
 - Batch events require `EventType` and `EventTime` fields.
 - Logs include correlation id and minimal request metadata only.
@@ -44,5 +44,7 @@ Future hardening option (post-PoC): add an API gateway/WAF layer (for example AP
 
 ## Build and test
 From `collector/`:
-- `dotnet build src/ChromeCollector.FunctionApp/ChromeCollector.FunctionApp.csproj`
-- `dotnet test tests/ChromeCollector.FunctionApp.Tests/ChromeCollector.FunctionApp.Tests.csproj`
+- `dotnet build ChromeCollector.sln`
+- `dotnet test ChromeCollector.sln`
+
+Tests include a T-SQL syntax check of `src/ChromeCollector.FunctionApp/Sql/*.sql` and the collector's inline SQL (no database needed).

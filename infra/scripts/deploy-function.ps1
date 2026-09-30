@@ -3,7 +3,7 @@ param(
   [Parameter(Mandatory=$true)][string]$ResourceGroup
 )
 
-Push-Location collector/src/ChromebookCollector
+Push-Location collector/src/ChromeCollector.FunctionApp
 dotnet publish -c Release -o publish
 Push-Location publish
 Compress-Archive -Path * -DestinationPath ../../../../collector.zip -Force

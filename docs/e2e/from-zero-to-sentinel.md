@@ -14,12 +14,12 @@
 ## 2) Deploy infrastructure
 ### Bash
 ```bash
-bash infra/scripts/deploy.sh <resource-group> <prefix>
+bash infra/scripts/deploy-bicep.sh <resource-group> eastus
 ```
 
 ### PowerShell
 ```powershell
-pwsh infra/scripts/deploy.ps1 -ResourceGroup <rg> -Prefix <prefix>
+pwsh infra/scripts/deploy-bicep.ps1 -ResourceGroup <rg> -Location eastus
 ```
 
 ## 3) Create DCE/DCR for custom table stream

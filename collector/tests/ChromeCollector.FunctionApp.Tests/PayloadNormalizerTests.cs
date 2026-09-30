@@ -19,22 +19,25 @@ public class PayloadNormalizerTests
             DeviceSerial = "serial-456",
             Url = "https://example.com/page",
             Domain = "example.com",
-            Title = "Example",
-            DownloadFileName = "file.txt",
-            DownloadMime = "text/plain",
-            DownloadDanger = "safe",
-            DownloadState = "complete",
-            ExtensionVersion = "1.0.0",
             SessionId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
         };
 
-        var record = sut.Normalize(evt, "key-1", "10.0.0.1");
+        var record = sut.Normalize(evt, "key-1", "203.0.113.5", "HIGH");
 
-        record["EventType_s"].Should().Be("NAVIGATION");
-        record["UserEmail_s"].Should().Be("user@example.com");
-        record["SessionId_g"].Should().Be(evt.SessionId);
-        record["KeyId_s"].Should().Be("key-1");
-        record["ClientIp_s"].Should().Be("10.0.0.1");
-        record.Should().ContainKeys("CollectorTimeUtc_t", "EventTimeUtc_t");
+        record["TimeGenerated"].Should().Be(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        record["EventType"].Should().Be("NAVIGATION");
+        record["EventCategory"].Should().Be("ACTIVITY");
+        record["UserEmail"].Should().Be("user@example.com");
+        record["SessionId"].Should().Be(evt.SessionId);
+        record["KeyId"].Should().Be("key-1");
+        record["PublicIp"].Should().Be("203.0.113.5");
+        record["AttributionConfidence"].Should().Be("HIGH");
+    }
+
+    [Fact]
+    public void Normalize_SessionEventsAreCategorizedAsSession()
+    {
+        var record = new PayloadNormalizer().Normalize(new ChromeEvent { EventType = "HEARTBEAT" }, "k", null, "LOW");
+        record["EventCategory"].Should().Be("SESSION");
     }
 }

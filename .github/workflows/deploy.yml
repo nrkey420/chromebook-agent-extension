@@ -21,7 +21,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy infra
         run: |
-          bash infra/scripts/deploy.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.DEPLOY_PREFIX }}" "${{ secrets.AZURE_LOCATION }}"
+          bash infra/scripts/deploy-bicep.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.AZURE_LOCATION }}"
       - name: Deploy function app
         run: |
           bash infra/scripts/deploy-function.sh "${{ secrets.AZURE_FUNCTION_APP_NAME }}" "${{ secrets.AZURE_RESOURCE_GROUP }}"
