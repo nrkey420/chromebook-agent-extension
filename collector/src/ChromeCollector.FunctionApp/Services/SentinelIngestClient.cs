@@ -31,7 +31,7 @@ public sealed class SentinelIngestClient(HttpClient httpClient, IConfiguration c
 
         if (string.IsNullOrWhiteSpace(endpoint) || string.IsNullOrWhiteSpace(dcrImmutableId) || string.IsNullOrWhiteSpace(streamName))
         {
-            logger.LogWarning("Sentinel ingestion disabled because required settings are missing.");
+            logger.LogDebug("Sentinel ingestion skipped: DCE_ENDPOINT, DCR_IMMUTABLE_ID or DCR_STREAM_NAME not set.");
             return 0;
         }
 

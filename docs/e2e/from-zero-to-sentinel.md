@@ -80,31 +80,39 @@ user for the Function App's managed identity with `db_datareader` and `db_datawr
 collector returns 503 (SQL login fails) and devices keep their events queued. If the grant is run by a
 service principal instead of a person, the SQL server needs an identity with the Entra *Directory Readers* role.
 
-## 3) Create DCE/DCR for custom table stream
+## 3) Sentinel pipeline (optional): table, DCE, DCR, permissions and app settings
+Sentinel ingestion stays off until `DCE_ENDPOINT`, `DCR_IMMUTABLE_ID` and `DCR_STREAM_NAME` are set on the
+Function App. One script sets everything up and is safe to re-run:
+
+1. creates/updates the custom table `ChromebookActivity_CL` in your Sentinel (Log Analytics) workspace,
+2. creates/updates a Data Collection Endpoint and a Data Collection Rule whose stream matches the collector payload,
+3. grants the Function App's managed identity **Monitoring Metrics Publisher** on the DCR,
+4. sets the three app settings on the Function App.
+
+`<location>` must be the **workspace's** region (a DCR must be in the same region as its destination workspace).
+The workspace can be in another resource group or subscription you can write to.
+
 ### Bash
 ```bash
-bash infra/scripts/create-dce-dcr.sh <rg> eastus <workspaceResourceId>
+bash infra/scripts/create-dce-dcr.sh <rg> <location> <workspaceResourceId> <functionAppName>
 ```
 
 ### PowerShell
 ```powershell
-pwsh infra/scripts/create-dce-dcr.ps1 -ResourceGroup <rg> -WorkspaceResourceId <workspaceResourceId>
+pwsh infra/scripts/create-dce-dcr.ps1 -ResourceGroup <rg> -Location <location> -WorkspaceResourceId <workspaceResourceId> -FunctionAppName <functionAppName>
 ```
 
-Capture:
-- DCE ingestion endpoint
-- DCR immutable ID
+The columns come from `infra/sentinel/chromebook-activity-schema.json`, the single source of truth for the table
+and DCR stream (see `docs/sentinel-schema.md`). Tests fail if the collector payload (`PayloadNormalizer`) drifts
+from it, because the Logs Ingestion API silently drops fields the stream does not declare. After changing
+columns, re-run the script to update the table and DCR.
 
-## 4) Configure Function app settings (Sentinel only)
-The core settings are set by the deployment. Sentinel ingestion is optional and stays off until
-these are set:
-- `DCE_ENDPOINT`
-- `DCR_IMMUTABLE_ID`
-- `DCR_STREAM_NAME`
+The role assignment can take a few minutes to take effect; until then Sentinel sends fail with 403 (logged to
+Application Insights as "Sentinel ingestion failed"). Events still reach Blob storage and SQL; Sentinel sends are
+best-effort and are not retried.
 
-Grant Function App managed identity `Monitoring Metrics Publisher` on the DCR.
-Note: the DCR stream columns in `create-dce-dcr.*` do not yet match the collector's Sentinel payload
-(`PayloadNormalizer`); align them before enabling Sentinel.
+## 4) Function app settings
+Nothing to set by hand: the Bicep deployment sets the core settings and step 3 sets the Sentinel ones.
 
 ## 5) Deploy function code
 Use a recent Azure CLI (`az upgrade`) so `config-zip` supports Flex Consumption. On Flex, the package is
@@ -131,7 +139,7 @@ Use Google Admin force-install and apply managed policy JSON with collector endp
 ## 7) Validate end-to-end
 1. Confirm extension queues and flushes in service worker logs.
 2. Confirm Function logs show accepted events.
-3. Confirm Blob container `raw-events` receives JSONL files.
+3. Confirm Blob container `chrome-activity-raw` receives JSONL files.
 4. Run KQL:
 
 ```kusto

@@ -1,0 +1,91 @@
+{
+  "_comment": "Single source of truth for the Sentinel custom table and DCR stream. Must match PayloadNormalizer (enforced by SentinelSchemaTests). Used by infra/scripts/create-dce-dcr.*",
+  "tableName": "ChromebookActivity_CL",
+  "streamName": "Custom-ChromebookActivity_CL",
+  "columns": [
+    {
+      "name": "TimeGenerated",
+      "type": "datetime"
+    },
+    {
+      "name": "EventId",
+      "type": "string"
+    },
+    {
+      "name": "EventType",
+      "type": "string"
+    },
+    {
+      "name": "EventCategory",
+      "type": "string"
+    },
+    {
+      "name": "UserEmail",
+      "type": "string"
+    },
+    {
+      "name": "DirectoryDeviceId",
+      "type": "string"
+    },
+    {
+      "name": "DeviceSerial",
+      "type": "string"
+    },
+    {
+      "name": "SessionId",
+      "type": "string"
+    },
+    {
+      "name": "Url",
+      "type": "string"
+    },
+    {
+      "name": "Domain",
+      "type": "string"
+    },
+    {
+      "name": "Title",
+      "type": "string"
+    },
+    {
+      "name": "SearchQuery",
+      "type": "string"
+    },
+    {
+      "name": "DownloadFileName",
+      "type": "string"
+    },
+    {
+      "name": "DownloadDanger",
+      "type": "string"
+    },
+    {
+      "name": "DownloadState",
+      "type": "string"
+    },
+    {
+      "name": "InternalIp",
+      "type": "string"
+    },
+    {
+      "name": "PublicIp",
+      "type": "string"
+    },
+    {
+      "name": "MacAddress",
+      "type": "string"
+    },
+    {
+      "name": "AttributionConfidence",
+      "type": "string"
+    },
+    {
+      "name": "ExtensionVersion",
+      "type": "string"
+    },
+    {
+      "name": "KeyId",
+      "type": "string"
+    }
+  ]
+}
