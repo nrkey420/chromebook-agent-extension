@@ -1,4 +1,5 @@
 using System.Text;
+using Azure;
 using Azure.Storage.Blobs;
 
 namespace ChromeCollector.FunctionApp.Services;
@@ -24,9 +25,16 @@ public sealed class BlobWriter(BlobServiceClient blobServiceClient) : IBlobWrite
         var blobName = $"{prefix}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}.jsonl";
         var blobClient = container.GetBlobClient(blobName);
 
-        var content = string.Join('\n', lines);
-        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-        await blobClient.UploadAsync(stream, overwrite: true, cancellationToken);
+        var bytes = Encoding.UTF8.GetBytes(string.Join('\n', lines));
+        try
+        {
+            await blobClient.UploadAsync(new BinaryData(bytes), overwrite: true, cancellationToken);
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == "ContainerNotFound")
+        {
+            await container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+            await blobClient.UploadAsync(new BinaryData(bytes), overwrite: true, cancellationToken);
+        }
 
         return $"{containerName}/{blobName}";
     }

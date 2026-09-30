@@ -4,7 +4,8 @@
 
 ### Deployment assumptions for this PoC
 - Azure region is fixed to **East US** (`eastus`).
-- Azure Functions hosting is fixed to **Linux Consumption** (`Y1`). Microsoft is retiring Linux Consumption (Sept 2028); move to Flex Consumption before production.
+- Azure Functions hosting is **Flex Consumption** (`FC1`, Linux, .NET 8 isolated). Scale-out is capped by the
+  `maximumInstanceCount` parameter (default 40); memory per instance by `instanceMemoryMB` (default 2048).
 
 - Azure CLI + Monitor extension
 - go-sqlcmd (Entra authentication for `init-sql`)
@@ -13,7 +14,7 @@
 - Chrome browser / managed Chromebook test device
 
 ## 2) Deploy infrastructure
-Creates Storage, Log Analytics + App Insights, Key Vault, a Linux Consumption Function App
+Creates Storage, Log Analytics + App Insights, Key Vault, a Flex Consumption Function App
 (.NET 8 isolated), and Azure SQL, and prints the outputs (function app name, collector URL,
 SQL server FQDN, Key Vault name).
 
@@ -33,8 +34,11 @@ versionless, so the app picks it up on its next refresh or restart.
 
 The account running the deployment needs **Owner** or **User Access Administrator** on the resource group
 (to create the Key Vault role assignments); in the GitHub Deploy workflow that is the OIDC service principal.
-`AzureWebJobsStorage` remains a plain connection string: the zip deployment on Linux Consumption needs to
-read it. Moving to Flex Consumption removes that key entirely (identity-based storage).
+**Storage uses no keys either.** Shared-key access is disabled on the storage account. The Function App uses
+its managed identity (`AzureWebJobsStorage__accountName`, granted *Storage Blob Data Owner*) for the Functions
+host, for Flex deployment packages (container `app-package-<app name>`), and for the raw event archive
+(`chrome-activity-raw`). People who need to browse blobs need a data role on the account (for example
+*Storage Blob Data Reader*); storage account keys and connection strings will not work.
 
 ### Bash
 ```bash
@@ -95,9 +99,11 @@ Note: the DCR stream columns in `create-dce-dcr.*` do not yet match the collecto
 (`PayloadNormalizer`); align them before enabling Sentinel.
 
 ## 5) Deploy function code
-Deploying code also restarts the app, which re-resolves the Key Vault references. If you redeploy only
-infrastructure and the portal shows a Key Vault reference error (for example right after the role
-assignment was created), restart the Function App.
+Use a recent Azure CLI (`az upgrade`) so `config-zip` supports Flex Consumption. On Flex, the package is
+uploaded into the app's deployment container using the app's managed identity. Right after the first infra
+deployment, the storage and Key Vault role assignments can take a few minutes to take effect: if the zip
+deployment fails with an authorization error, or the portal shows a Key Vault reference error, wait a few
+minutes and re-run the deployment (which also restarts the app and re-resolves the references).
 ### Bash
 ```bash
 bash infra/scripts/deploy-function.sh <function-app-name> <resource-group>
