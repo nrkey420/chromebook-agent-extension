@@ -13,7 +13,7 @@ rm -rf "$STAGING"
 mkdir -p "$STAGING"
 
 cp "$EXT_DIR/manifest.json" "$EXT_DIR/sw.js" "$STAGING/"
-cp -R "$EXT_DIR/src" "$EXT_DIR/policy" "$STAGING/"
+cp -R "$EXT_DIR/src" "$EXT_DIR/policy" "$EXT_DIR/icons" "$STAGING/"
 
 if [[ -n "${COLLECTOR_HOST_PERMISSION:-}" ]]; then
   python3 - "$STAGING/manifest.json" "$COLLECTOR_HOST_PERMISSION" <<'PY'
