@@ -1,0 +1,9 @@
+{
+  "name": "chromebook-agent-extension",
+  "private": true,
+  "type": "module",
+  "description": "Development metadata only (tests); not part of the packaged extension.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

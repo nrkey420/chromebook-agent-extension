@@ -1,13 +1,26 @@
 {
   "manifest_version": 3,
   "name": "Chromebook Session Attribution PoC",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Managed Chromebook session attribution and browser telemetry PoC.",
-  "permissions": ["history", "downloads", "storage", "identity", "tabs", "enterprise.deviceAttributes"],
-  "host_permissions": ["https://collector.example.azurewebsites.net/*"],
+  "permissions": [
+    "alarms",
+    "downloads",
+    "enterprise.deviceAttributes",
+    "enterprise.networkingAttributes",
+    "history",
+    "identity",
+    "identity.email",
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": ["https://*.azurewebsites.net/*"],
+  "storage": {
+    "managed_schema": "policy/managed_schema.json"
+  },
   "background": {
     "service_worker": "sw.js",
     "type": "module"
   },
-  "minimum_chrome_version": "114"
+  "minimum_chrome_version": "116"
 }

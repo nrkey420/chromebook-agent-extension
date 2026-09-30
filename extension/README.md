@@ -1,0 +1,21 @@
+# Chrome extension (MV3)
+
+Force-installed on managed Chromebooks. Queues session, heartbeat, navigation and download events in
+`chrome.storage.local` and sends them in HMAC-signed batches to the collector
+(`POST /api/v1/chrome/events/batch`). Configuration comes only from Google Admin extension policy
+(`policy/managed_schema.json`); see `infra/scripts/set-extension-policy.md`.
+
+## Behavior
+- **Timers** use `chrome.alarms` (send every `flushIntervalMs`, heartbeat every 5 minutes), so they survive
+  Chrome stopping the service worker.
+- **Queue:** events are removed only after the collector accepts them; offline or failed sends are retried.
+  400/413 responses drop the batch (it can never succeed). The queue is capped at 20,000 events; drops are
+  reported in the next heartbeat's `detail`.
+- **Sessions:** a new session starts on first use, after `inactivityTimeoutMinutes` without events, when the
+  signed-in user changes, or when the browser restarts.
+- **Device details** (serial, directory device ID, asset ID, location, local IPv4/IPv6, MAC) come from
+  `chrome.enterprise.*` APIs, which only answer on managed ChromeOS for affiliated users.
+
+## Develop
+- Tests: `node --test extension/tests/*.test.mjs` (Node 22; uses a fake `chrome` API).
+- Package: `bash extension/tools/pack.sh` or `pwsh extension/tools/pack.ps1`.

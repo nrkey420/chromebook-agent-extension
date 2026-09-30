@@ -1,14 +1,47 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "collectorUrl": { "type": "string" },
-    "keyId": { "type": "string" },
-    "sharedSecret": { "type": "string" },
-    "flushIntervalMs": { "type": "integer", "minimum": 5000, "maximum": 600000 },
-    "batchSize": { "type": "integer", "minimum": 1, "maximum": 500 },
-    "debug": { "type": "boolean" },
-    "collectTitles": { "type": "boolean" }
-  },
-  "required": ["collectorUrl", "keyId", "sharedSecret"]
+    "collectorUrl": {
+      "title": "Collector URL",
+      "description": "Base URL of the collector Function App, e.g. https://<functionHostname>",
+      "type": "string"
+    },
+    "keyId": {
+      "title": "HMAC key ID",
+      "description": "Key ID matching the collector setting HMAC_KEYS__<keyId> (KEY1 by default).",
+      "type": "string"
+    },
+    "sharedSecret": {
+      "title": "HMAC shared secret",
+      "description": "Base64 HMAC key (the HmacKey1 secret in Key Vault).",
+      "type": "string"
+    },
+    "flushIntervalMs": {
+      "title": "Send interval (ms)",
+      "description": "How often queued events are sent. Minimum 30000 (Chrome alarm limit).",
+      "type": "integer",
+      "minimum": 30000,
+      "maximum": 600000
+    },
+    "batchSize": {
+      "title": "Batch size",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500
+    },
+    "inactivityTimeoutMinutes": {
+      "title": "Session inactivity timeout (minutes)",
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 240
+    },
+    "debug": {
+      "title": "Debug logging",
+      "type": "boolean"
+    },
+    "collectTitles": {
+      "title": "Collect page titles",
+      "type": "boolean"
+    }
+  }
 }
