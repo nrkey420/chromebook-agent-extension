@@ -15,8 +15,16 @@
 
 ## 2) Deploy infrastructure
 Creates Storage, Log Analytics + App Insights, Key Vault, a Flex Consumption Function App
-(.NET 8 isolated), and Azure SQL, and prints the outputs (function app name, collector URL,
+(.NET 8 isolated), and Azure SQL (serverless), and prints the outputs (function app name, collector URL,
 SQL server FQDN, Key Vault name).
+
+**Azure SQL is serverless General Purpose (Gen5)**: it scales between `sqlMinVcores` (default 0.5) and
+`sqlMaxVcores` (default 2), is billed per second of vCore use plus storage (`sqlMaxSizeGB`, default 32), and
+pauses after `sqlAutoPauseDelayMinutes` (default 60; `-1` disables pausing) with no connections. While paused
+only storage is billed. The first connection after a pause fails for about a minute while it resumes; the
+collector returns 503 and devices retry with their queued events. In practice, device heartbeats (every
+5 minutes) and Power BI DirectQuery refreshes keep it online whenever devices or reports are in use, so it
+mostly pauses overnight and on weekends. Change these in `infra/bicep/main.parameters.json`.
 
 **Azure SQL uses Microsoft Entra-only authentication** — there are no SQL logins or passwords.
 - The SQL Entra admin defaults to the user running the script. A group is recommended: set

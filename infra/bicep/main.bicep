@@ -45,6 +45,29 @@ param maximumInstanceCount int = 40
 ])
 param instanceMemoryMB int = 2048
 
+@description('Azure SQL serverless: maximum vCores the database can scale up to.')
+@allowed([
+  1
+  2
+  4
+  6
+  8
+  10
+  12
+  14
+  16
+])
+param sqlMaxVcores int = 2
+
+@description('Azure SQL serverless: minimum vCores while online (decimal as string, e.g. "0.5"). Must be valid for sqlMaxVcores.')
+param sqlMinVcores string = '0.5'
+
+@description('Azure SQL serverless: minutes of inactivity before the database pauses (minimum 15), or -1 to never pause.')
+param sqlAutoPauseDelayMinutes int = 60
+
+@description('Azure SQL: maximum database size in GB.')
+param sqlMaxSizeGB int = 32
+
 var suffix = toLower(uniqueString(resourceGroup().id, prefix))
 var storageName = take(toLower(replace('${prefix}${suffix}', '-', '')), 24)
 var functionName = '${prefix}-func-${environment}'
@@ -143,13 +166,25 @@ resource sqlAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' 
   }
 }
 
+// Serverless General Purpose: scales between sqlMinVcores and sqlMaxVcores, billed per second of vCore use,
+// and pauses after sqlAutoPauseDelayMinutes of inactivity (storage is still billed while paused).
+// The first connection after a pause fails while the database resumes (about a minute); the collector
+// returns 503 and devices retry with their queued events.
 resource db 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   parent: sql
   name: sqlDbName
   location: location
   sku: {
-    name: 'Basic'
-    tier: 'Basic'
+    name: 'GP_S_Gen5'
+    tier: 'GeneralPurpose'
+    family: 'Gen5'
+    capacity: sqlMaxVcores
+  }
+  properties: {
+    minCapacity: json(sqlMinVcores)
+    autoPauseDelay: sqlAutoPauseDelayMinutes
+    maxSizeBytes: sqlMaxSizeGB * 1024 * 1024 * 1024
+    zoneRedundant: false
   }
 }
 
