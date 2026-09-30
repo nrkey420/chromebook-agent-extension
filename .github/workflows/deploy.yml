@@ -1,32 +1,148 @@
-name: Deploy
+# Continuous deployment to Azure. Runs on every push to main that touches the collector, the infrastructure or
+# this workflow, and on demand. One-time setup (OIDC app, secrets, first SQL grant): docs/github-actions-deploy.md
+name: Deploy to Azure
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'collector/**'
+      - 'infra/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# Never run two deployments at once; queue instead of cancelling a deployment midway.
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  GO_SQLCMD_VERSION: v1.10.0
+
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - name: Build and test collector
+        run: |
+          dotnet build collector/ChromeCollector.sln
+          dotnet test collector/ChromeCollector.sln --no-build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: azure-poc
+    permissions:
+      id-token: write # OIDC sign-in to Azure
+      contents: read
+    env:
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check configuration
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          HMAC_KEY_B64: ${{ secrets.HMAC_KEY_B64 }}
+          SQL_ENTRA_ADMIN_OBJECT_ID: ${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
+          SQL_ENTRA_ADMIN_NAME: ${{ secrets.SQL_ENTRA_ADMIN_NAME }}
+        run: |
+          missing=()
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID HMAC_KEY_B64 \
+                      SQL_ENTRA_ADMIN_OBJECT_ID SQL_ENTRA_ADMIN_NAME AZURE_RESOURCE_GROUP; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing configuration: ${missing[*]}. See docs/github-actions-deploy.md."
+            exit 1
+          fi
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Deploy infra
+
+      - name: Deploy infrastructure (Bicep)
+        id: infra
         env:
+          HMAC_KEY_B64: ${{ secrets.HMAC_KEY_B64 }}
           SQL_ENTRA_ADMIN_OBJECT_ID: ${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
           SQL_ENTRA_ADMIN_NAME: ${{ secrets.SQL_ENTRA_ADMIN_NAME }}
           SQL_ENTRA_ADMIN_TYPE: ${{ secrets.SQL_ENTRA_ADMIN_TYPE }}
-          HMAC_KEY_B64: ${{ secrets.HMAC_KEY_B64 }}
         run: |
-          bash infra/scripts/deploy-bicep.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.AZURE_LOCATION }}"
-      - name: Deploy function app
+          outputs=$(bash infra/scripts/deploy-bicep.sh "$AZURE_RESOURCE_GROUP" "$AZURE_LOCATION")
+          for key in functionAppName functionHostname sqlServerName sqlServerFqdn sqlDatabaseName keyVaultName; do
+            value=$(jq -r --arg k "$key" '.[$k].value' <<<"$outputs")
+            echo "$key=$value" >> "$GITHUB_OUTPUT"
+            echo "$key: $value"
+          done
+
+      - name: Install go-sqlcmd
         run: |
-          bash infra/scripts/deploy-function.sh "${{ secrets.AZURE_FUNCTION_APP_NAME }}" "${{ secrets.AZURE_RESOURCE_GROUP }}"
+          curl -sSL "https://github.com/microsoft/go-sqlcmd/releases/download/${GO_SQLCMD_VERSION}/sqlcmd-linux-amd64.tar.bz2" \
+            | tar xj -C "$RUNNER_TEMP" sqlcmd
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Allow this runner through the SQL firewall
+        run: |
+          runner_ip=$(curl -sS --retry 3 https://api.ipify.org)
+          az sql server firewall-rule create -g "$AZURE_RESOURCE_GROUP" -s "${{ steps.infra.outputs.sqlServerName }}" \
+            -n "github-actions-${{ github.run_id }}" --start-ip-address "$runner_ip" --end-ip-address "$runner_ip" -o none
+
+      - name: Apply SQL schema
+        env:
+          SQL_SERVER: ${{ steps.infra.outputs.sqlServerFqdn }}
+          SQL_DATABASE: ${{ steps.infra.outputs.sqlDatabaseName }}
+          FUNCTION_APP_NAME: ${{ steps.infra.outputs.functionAppName }}
+          INIT_SQL_SKIP_GRANT: 'true'
+        run: |
+          # The serverless database may be auto-paused; the first connection fails while it resumes.
+          for attempt in 1 2 3 4; do
+            bash infra/scripts/init-sql.sh && exit 0
+            echo "Attempt $attempt failed; retrying in 60s (database may be resuming)."
+            sleep 60
+          done
+          exit 1
+
+      - name: Remove the runner's SQL firewall rule
+        if: always() && steps.infra.outputs.sqlServerName != ''
+        run: |
+          az sql server firewall-rule delete -g "$AZURE_RESOURCE_GROUP" -s "${{ steps.infra.outputs.sqlServerName }}" \
+            -n "github-actions-${{ github.run_id }}" -o none || true
+
+      - name: Deploy Function App code
+        env:
+          FUNCTION_APP_NAME: ${{ steps.infra.outputs.functionAppName }}
+        run: |
+          # Right after the first infrastructure deployment, the app identity's storage role can take a few
+          # minutes to take effect and the zip deployment fails with an authorization error until it does.
+          for attempt in 1 2 3 4; do
+            bash infra/scripts/deploy-function.sh "$FUNCTION_APP_NAME" "$AZURE_RESOURCE_GROUP" && exit 0
+            echo "Attempt $attempt failed; retrying in 60s."
+            sleep 60
+          done
+          exit 1
+
+      - name: Smoke test
+        run: |
+          curl -fsS --retry 10 --retry-delay 15 --retry-all-errors \
+            "https://${{ steps.infra.outputs.functionHostname }}/api/health"
+          echo
+          echo "Deployed to https://${{ steps.infra.outputs.functionHostname }}" >> "$GITHUB_STEP_SUMMARY"

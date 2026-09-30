@@ -14,6 +14,9 @@ Chrome Extension (MV3) → Azure Function collector (.NET 8 isolated) → Blob r
 7. Verify blob/SQL/Sentinel with `infra/scripts/send-test-batch.sh`.
 8. Connect Power BI DirectQuery to SQL views (`vw_*`).
 
+## Continuous deployment
+Pushes to `main` that change `collector/` or `infra/` deploy to Azure via GitHub Actions (`.github/workflows/deploy.yml`). One-time setup: `docs/github-actions-deploy.md`.
+
 ## Prereqs
 Azure CLI, .NET 8 SDK, go-sqlcmd (Azure SQL uses Microsoft Entra-only auth), Chrome Enterprise managed environment.
 
