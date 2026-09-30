@@ -12,10 +12,21 @@
 - Chrome browser / managed Chromebook test device
 
 ## 2) Deploy infrastructure
-Creates Storage, Log Analytics + App Insights, a Linux Consumption Function App (.NET 8 isolated),
-and Azure SQL. The deployment sets `AzureWebJobsStorage`, `APPLICATIONINSIGHTS_CONNECTION_STRING`,
-`SQL_CONNECTION_STRING` and `HMAC_KEYS__KEY1` on the Function App, and prints the outputs
-(function app name, collector URL, SQL server FQDN).
+Creates Storage, Log Analytics + App Insights, Key Vault, a Linux Consumption Function App
+(.NET 8 isolated), and Azure SQL, and prints the outputs (function app name, collector URL,
+SQL server FQDN, Key Vault name).
+
+Secrets live in Key Vault (`SqlConnectionString`, `SqlAdminPassword`, `HmacKey1`). The Function App's
+`SQL_CONNECTION_STRING` and `HMAC_KEYS__KEY1` settings are Key Vault references, resolved with the app's
+managed identity (granted *Key Vault Secrets User*). The signed-in user running the script is granted
+*Key Vault Secrets Officer* so they can read or rotate secrets (override with `KEYVAULT_ADMIN_OBJECT_ID`).
+The account running the deployment needs **Owner** or **User Access Administrator** on the resource group
+(to create the Key Vault role assignments); in the GitHub Deploy workflow that is the OIDC service principal.
+`AzureWebJobsStorage` remains a plain connection string: the zip deployment on Linux Consumption needs to
+read it. Moving to Flex Consumption removes that key entirely (identity-based storage).
+
+To rotate a secret, add a new version in Key Vault (`az keyvault secret set --vault-name <kv> -n HmacKey1 --value <new>`);
+the references are versionless, so the app picks it up on its next refresh or restart.
 
 ### Bash
 ```bash
@@ -59,6 +70,9 @@ Note: the DCR stream columns in `create-dce-dcr.*` do not yet match the collecto
 (`PayloadNormalizer`); align them before enabling Sentinel.
 
 ## 5) Deploy function code
+Deploying code also restarts the app, which re-resolves the Key Vault references. If you redeploy only
+infrastructure and the portal shows a Key Vault reference error (for example right after the role
+assignment was created), restart the Function App.
 ### Bash
 ```bash
 bash infra/scripts/deploy-function.sh <function-app-name> <resource-group>
