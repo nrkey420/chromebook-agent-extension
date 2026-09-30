@@ -5,11 +5,17 @@ namespace ChromeCollector.FunctionApp.Models;
 
 public sealed class ChromeEvent
 {
+    [JsonPropertyName("eventId")]
+    public Guid? EventId { get; set; }
+
     [JsonPropertyName("eventType")]
     public string? EventType { get; set; }
 
     [JsonPropertyName("eventTimeUtc")]
     public DateTimeOffset? EventTimeUtc { get; set; }
+
+    [JsonPropertyName("sessionId")]
+    public Guid? SessionId { get; set; }
 
     [JsonPropertyName("userEmail")]
     public string? UserEmail { get; set; }
@@ -20,11 +26,35 @@ public sealed class ChromeEvent
     [JsonPropertyName("serialNumber")]
     public string? DeviceSerial { get; set; }
 
+    [JsonPropertyName("assetId")]
+    public string? AssetId { get; set; }
+
+    [JsonPropertyName("annotatedLocation")]
+    public string? AnnotatedLocation { get; set; }
+
+    [JsonPropertyName("hostname")]
+    public string? Hostname { get; set; }
+
+    [JsonPropertyName("manufacturer")]
+    public string? Manufacturer { get; set; }
+
+    [JsonPropertyName("model")]
+    public string? Model { get; set; }
+
+    [JsonPropertyName("chromeVersion")]
+    public string? ChromeVersion { get; set; }
+
+    [JsonPropertyName("platformVersion")]
+    public string? PlatformVersion { get; set; }
+
     [JsonPropertyName("internalIp")]
     public string? InternalIp { get; set; }
 
-    [JsonPropertyName("internalIpConfidence")]
-    public string? InternalIpConfidence { get; set; }
+    [JsonPropertyName("internalIpv6")]
+    public string? InternalIpv6 { get; set; }
+
+    [JsonPropertyName("macAddress")]
+    public string? MacAddress { get; set; }
 
     [JsonPropertyName("publicIp")]
     public string? PublicIp { get; set; }
@@ -44,6 +74,12 @@ public sealed class ChromeEvent
     [JsonPropertyName("title")]
     public string? Title { get; set; }
 
+    [JsonPropertyName("transition")]
+    public string? Transition { get; set; }
+
+    [JsonPropertyName("detail")]
+    public string? Detail { get; set; }
+
     [JsonPropertyName("downloadFileName")]
     public string? DownloadFileName { get; set; }
 
@@ -59,8 +95,12 @@ public sealed class ChromeEvent
     [JsonPropertyName("extensionVersion")]
     public string? ExtensionVersion { get; set; }
 
-    [JsonPropertyName("sessionId")]
-    public Guid? SessionId { get; set; }
+    // Derived by the collector (EventEnricher), not sent by the extension.
+    [JsonPropertyName("searchEngine")]
+    public string? SearchEngine { get; set; }
+
+    [JsonPropertyName("searchQuery")]
+    public string? SearchQuery { get; set; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }

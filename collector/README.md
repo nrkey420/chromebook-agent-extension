@@ -9,7 +9,9 @@
 1. Copy template settings:
    - Bash: `cp src/ChromeCollector.FunctionApp/local.settings.json.template src/ChromeCollector.FunctionApp/local.settings.json`
    - PowerShell: `Copy-Item src/ChromeCollector.FunctionApp/local.settings.json.template src/ChromeCollector.FunctionApp/local.settings.json`
-2. Fill in `HMAC_KEYS__<keyId>` and optional Sentinel settings.
+2. Fill in `HMAC_KEYS__<keyId>`, optional Sentinel settings, and optionally `SQL_CONNECTION_STRING`.
+   Azure SQL uses Microsoft Entra-only auth: locally use `Authentication=Active Directory Default` (picks up
+   `az login`); in Azure the app uses `Authentication=Active Directory Managed Identity`. Leave it unset to skip SQL.
 3. Start Azurite or set `AzureWebJobsStorage` to a real connection string.
 4. Run the Function host from `collector/src/ChromeCollector.FunctionApp`:
    - `func start`
@@ -35,7 +37,7 @@ Accepted key sources:
 Timestamp skew must be within ±300 seconds.
 
 ## Security controls
-- In-memory token bucket rate limiting is applied per `X-Key-Id` (PoC control).
+- In-memory token bucket rate limiting is applied per `X-Key-Id` + `X-Device-Id` (PoC control; the fleet shares one key).
 - Request payload size is limited to 1 MB.
 - Batch events require `EventType` and `EventTime` fields.
 - Logs include correlation id and minimal request metadata only.
@@ -44,5 +46,7 @@ Future hardening option (post-PoC): add an API gateway/WAF layer (for example AP
 
 ## Build and test
 From `collector/`:
-- `dotnet build src/ChromeCollector.FunctionApp/ChromeCollector.FunctionApp.csproj`
-- `dotnet test tests/ChromeCollector.FunctionApp.Tests/ChromeCollector.FunctionApp.Tests.csproj`
+- `dotnet build ChromeCollector.sln`
+- `dotnet test ChromeCollector.sln`
+
+Tests include a T-SQL syntax check of `src/ChromeCollector.FunctionApp/Sql/*.sql` and the collector's inline SQL (no database needed).

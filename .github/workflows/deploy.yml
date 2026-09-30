@@ -20,8 +20,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy infra
+        env:
+          SQL_ENTRA_ADMIN_OBJECT_ID: ${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
+          SQL_ENTRA_ADMIN_NAME: ${{ secrets.SQL_ENTRA_ADMIN_NAME }}
+          SQL_ENTRA_ADMIN_TYPE: ${{ secrets.SQL_ENTRA_ADMIN_TYPE }}
+          HMAC_KEY_B64: ${{ secrets.HMAC_KEY_B64 }}
         run: |
-          bash infra/scripts/deploy.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.DEPLOY_PREFIX }}" "${{ secrets.AZURE_LOCATION }}"
+          bash infra/scripts/deploy-bicep.sh "${{ secrets.AZURE_RESOURCE_GROUP }}" "${{ secrets.AZURE_LOCATION }}"
       - name: Deploy function app
         run: |
           bash infra/scripts/deploy-function.sh "${{ secrets.AZURE_FUNCTION_APP_NAME }}" "${{ secrets.AZURE_RESOURCE_GROUP }}"

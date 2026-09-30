@@ -14,8 +14,8 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Build collector
-        run: dotnet build collector/ChromebookCollector.sln
+        run: dotnet build collector/ChromeCollector.sln
       - name: Test collector
-        run: dotnet test collector/ChromebookCollector.sln --no-build
+        run: dotnet test collector/ChromeCollector.sln --no-build
       - name: Package extension
         run: bash extension/tools/pack.sh

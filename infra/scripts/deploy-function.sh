@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 FUNC_NAME=${1:?function app name}
-pushd collector/src/ChromebookCollector >/dev/null
+pushd collector/src/ChromeCollector.FunctionApp >/dev/null
 dotnet publish -c Release -o publish
 cd publish
 zip -r ../../../../collector.zip . >/dev/null

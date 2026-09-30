@@ -7,15 +7,15 @@ Chrome Extension (MV3) → Azure Function collector (.NET 8 isolated) → Blob r
 ## Quickstart
 1. Deploy infra: `infra/scripts/deploy-bicep.sh`.
 2. Create DCE/DCR: `infra/scripts/create-dce-dcr.sh <workspaceResourceId>`.
-3. Initialize SQL schema: `infra/scripts/init-sql.sh`.
-4. Set Function app settings (`HMAC_KEYS__KEY1`, SQL and Sentinel values).
+3. Initialize SQL schema and grant the Function App's managed identity access: `infra/scripts/init-sql.sh`.
+4. Function app settings are set by the deployment (Flex Consumption; storage, SQL and Key Vault via managed identity). Sentinel settings are optional.
 5. Package extension: `extension/tools/pack.sh`.
 6. Force install extension and managed policy (see `infra/scripts/set-extension-policy.md`).
 7. Verify blob/SQL/Sentinel with `infra/scripts/send-test-batch.sh`.
 8. Connect Power BI DirectQuery to SQL views (`vw_*`).
 
 ## Prereqs
-Azure CLI, .NET 8 SDK, sqlcmd, Chrome Enterprise managed environment.
+Azure CLI, .NET 8 SDK, go-sqlcmd (Azure SQL uses Microsoft Entra-only auth), Chrome Enterprise managed environment.
 
 ## Repo structure
 - `extension/` MV3 service worker extension.
