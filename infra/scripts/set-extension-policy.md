@@ -4,8 +4,17 @@ Start with a **test OU** containing one Chromebook and one test account.
 
 ## 1. Publish the extension
 
-Package it with `bash extension/tools/pack.sh` (or `extension/tools/pack.ps1`), which produces
-`extension/dist/chromebook-activity-extension-v<version>.zip`.
+Get the upload zip from GitHub Actions (**Actions → Build extension package**):
+- Every push to `main` that changes `extension/` builds it. Open the run and download the
+  **chrome-web-store-v<version>** artifact (GitHub wraps artifacts in an extra zip: unzip it once, then upload
+  the inner `chromebook-activity-extension-v<version>.zip`). The artifact also has the store icon and promo tile.
+- Or click **Run workflow** with **Create a GitHub release** checked: the zip and images are attached to a
+  release `extension-v<version>` under **Releases**, ready to download and upload as-is.
+
+To build locally instead: `bash extension/tools/pack.sh` (or `extension/tools/pack.ps1`).
+
+**Bump `version` in `extension/manifest.json` before every new upload**: the Chrome Web Store rejects a version
+it has already seen, and the release step refuses to overwrite an existing release.
 
 The simplest way to force-install on managed Chromebooks is a **private Chrome Web Store item**:
 1. Register a Chrome Web Store developer account with an account in your Google Workspace domain.

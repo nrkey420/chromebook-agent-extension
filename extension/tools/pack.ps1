@@ -15,6 +15,7 @@ Copy-Item (Join-Path $ExtDir 'manifest.json') $Staging
 Copy-Item (Join-Path $ExtDir 'sw.js') $Staging
 Copy-Item (Join-Path $ExtDir 'src') $Staging -Recurse
 Copy-Item (Join-Path $ExtDir 'policy') $Staging -Recurse
+Copy-Item (Join-Path $ExtDir 'icons') $Staging -Recurse
 
 $manifestPath = Join-Path $Staging 'manifest.json'
 $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
