@@ -1,22 +1,25 @@
-import { getInternalIpContext } from './network.js';
+import { getNetworkDetails } from './network.js';
 
-export async function buildEvent(eventType, runtimeConfig, deviceContext, sessionId, payload = {}) {
-  const ipContext = await getInternalIpContext();
+export async function buildEvent(eventType, config, device, sessionId, payload = {}) {
+  const network = await getNetworkDetails();
+  const { title, ...rest } = payload;
 
   return {
+    eventId: crypto.randomUUID(), // lets the collector drop duplicates when a batch is retried
     eventType,
     eventTimeUtc: new Date().toISOString(),
     sessionId,
-    userEmail: deviceContext.userEmail || null,
-    directoryDeviceId: deviceContext.directoryDeviceId || null,
-    serialNumber: deviceContext.serialNumber || null,
-    internalIp: ipContext.internalIp,
-    internalIpConfidence: ipContext.internalIpConfidence,
-    publicIp: null,
+    userEmail: device.userEmail,
+    directoryDeviceId: device.directoryDeviceId,
+    serialNumber: device.serialNumber,
+    assetId: device.assetId,
+    annotatedLocation: device.annotatedLocation,
+    hostname: device.hostname,
+    internalIp: network.internalIp,
+    internalIpv6: network.internalIpv6,
+    macAddress: network.macAddress,
     extensionVersion: chrome.runtime.getManifest().version,
-    orgUnit: deviceContext.orgUnit || null,
-    school: deviceContext.school || null,
-    ...payload,
-    title: runtimeConfig.collectTitles ? payload.title ?? null : null
+    ...rest,
+    title: config.collectTitles ? title ?? null : null
   };
 }

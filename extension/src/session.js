@@ -1,10 +1,17 @@
+import { withLock } from './queue.js';
+
 const SESSION_STATE_KEY = 'sessionStateV2';
 
 function nowIso() {
   return new Date().toISOString();
 }
 
-export async function resolveSession(userEmail, inactivityTimeoutMinutes) {
+export function resolveSession(userEmail, inactivityTimeoutMinutes) {
+  // Serialized with queue writes so two events arriving together cannot both start a new session.
+  return withLock(() => resolveSessionUnlocked(userEmail, inactivityTimeoutMinutes));
+}
+
+async function resolveSessionUnlocked(userEmail, inactivityTimeoutMinutes) {
   const state = (await chrome.storage.local.get({ [SESSION_STATE_KEY]: null }))[SESSION_STATE_KEY];
   const now = Date.now();
   const timeoutMs = inactivityTimeoutMinutes * 60 * 1000;
@@ -34,7 +41,11 @@ export async function resolveSession(userEmail, inactivityTimeoutMinutes) {
   return { sessionId: state.sessionId, isNewSession: false, previousSessionId: null, userChanged: false, timedOut: false };
 }
 
-export async function closeSession() {
+export function closeSession() {
+  return withLock(closeSessionUnlocked);
+}
+
+async function closeSessionUnlocked() {
   const state = (await chrome.storage.local.get({ [SESSION_STATE_KEY]: null }))[SESSION_STATE_KEY];
   if (!state) return null;
   await chrome.storage.local.set({ [SESSION_STATE_KEY]: { ...state, active: false, lastSeenMs: Date.now(), closedAtUtc: nowIso() } });
