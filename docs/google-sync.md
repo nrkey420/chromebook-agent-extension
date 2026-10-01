@@ -79,17 +79,31 @@ az functionapp restart -g "$RG" -n "$APP"
 
 ### 4. Run it once now and check
 
-Run each job on demand with the Functions admin API (master key):
+**The sync code must be deployed first.** The deploy workflow deploys `main`, so the branch with the Google sync has
+to be merged (or deployed by hand) before these functions exist in Azure; until then the calls below return 404.
+
+Then run every job once and wait for the result:
 
 ```bash
-KEY=$(az functionapp keys list -g "$RG" -n "$APP" --query masterKey -o tsv)
-HOST=$(az functionapp show -g "$RG" -n "$APP" --query defaultHostName -o tsv)
-for f in GoogleUserSync GoogleDeviceSync GoogleChromeAuditSync GoogleLoginAuditSync; do
-  curl -sS -X POST "https://$HOST/admin/functions/$f" -H "x-functions-key: $KEY" -H 'Content-Type: application/json' -d '{}'
-done
+SQL_SERVER=<sqlServerFqdn> SQL_DATABASE=<sqlDatabaseName> \
+  bash infra/scripts/run-google-sync.sh <resource-group> <functionAppName>
 ```
 
-The calls return 202 immediately; the runs take from seconds (pilot OU) to several minutes (whole domain). Then:
+The script finds the app's hostname, checks that `GOOGLE_ADMIN_EMAIL` is set and the Key Vault key reference has
+resolved, starts each job through the Functions admin API (master key), and, with `SQL_SERVER`/`SQL_DATABASE` set and
+go-sqlcmd installed, waits for each job's row in `dbo.SyncState` and prints it. Without the SQL settings it only
+starts the jobs. Run a single job by naming it: `... <resource-group> <functionAppName> GoogleDeviceSync`.
+
+Messages you may see:
+
+| Message | Meaning |
+|---|---|
+| `NOT FOUND - this function is not deployed` | Deploy the code (see above). |
+| `WARNING: GOOGLE_ADMIN_EMAIL is not set` / `key reference is '…'` | The job will start but skip; finish step 3. |
+| `Could not read the app's master key` | You need Contributor or Website Contributor on the Function App. |
+| `Could not query SQL` | Add your IP to the SQL firewall, or sign in (`az login`) as a SQL Entra user. |
+
+The jobs take from seconds (pilot OU) to several minutes (whole domain). Further checks once they have run:
 
 ```sql
 SELECT * FROM dbo.SyncState ORDER BY SyncName;          -- every job SUCCESS with ItemsProcessed > 0
