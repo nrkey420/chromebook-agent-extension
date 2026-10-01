@@ -14,7 +14,7 @@ Google Admin SDK (devices, users, sign-in audit) → timer functions in the same
 6. Force install extension and managed policy (see `infra/scripts/set-extension-policy.md`).
 7. Verify blob/SQL/Sentinel with `infra/scripts/send-test-batch.sh`.
 8. Optional but needed for full reporting: set up the Google sync (device inventory, student IDs, Google sign-in events): `docs/google-sync.md`.
-9. Connect Power BI DirectQuery to SQL views (`vw_*`).
+9. Power BI report (fleet, logins, device/user drill-through, pipeline health): open `reporting/powerbi/ChromebookReporting.pbip` (`reporting/powerbi/README.md`).
 10. Investigations (device/user timelines, who was on an IP, web activity for a case): `docs/investigations.md`.
 11. Give people access through the database roles (helpdesk, investigators, audit reviewers): `docs/sql-access.md`.
 
@@ -29,4 +29,5 @@ Azure CLI, .NET 8 SDK, go-sqlcmd (Azure SQL uses Microsoft Entra-only auth), Chr
 - `collector/` Azure Function collector + SQL scripts + tests.
 - `infra/` Bicep + deployment scripts.
 - `docs/` architecture, data model, privacy, operations, Sentinel, Power BI.
+- `reporting/powerbi/` Power BI project (semantic model + report pages).
 - `docs/plans/` test plan, IR reporting and dashboards, scaling to 50k devices and the Chrome Web Store move.

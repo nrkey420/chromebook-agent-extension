@@ -91,7 +91,8 @@ SQL_SERVER=<sqlServerFqdn> SQL_DATABASE=<sqlDatabaseName> \
 
 The script finds the app's hostname, checks that `GOOGLE_ADMIN_EMAIL` is set and the Key Vault key reference has
 resolved, starts each job through the Functions admin API (master key), and, with `SQL_SERVER`/`SQL_DATABASE` set and
-go-sqlcmd installed, waits for each job's row in `dbo.SyncState` and prints it. Without the SQL settings it only
+go-sqlcmd installed (`bash infra/scripts/install-sqlcmd.sh`; from Cloud Shell also add a SQL firewall rule, see
+`docs/sql-access.md`), waits for each job's row in `dbo.SyncState` and prints it. Without the SQL settings it only
 starts the jobs. Run a single job by naming it: `... <resource-group> <functionAppName> GoogleDeviceSync`.
 
 Messages you may see:

@@ -28,7 +28,8 @@ the admin group to the people who administer the database; never put analysts or
    managed only through group membership.
 2. Make sure the schema (including `004_security.sql`) has been applied: a deploy from `main` does this, or run
    `infra/scripts/init-sql.sh`.
-3. As a person who is the SQL Entra admin (your IP allowed by the SQL firewall, `az login` done):
+3. As a person who is the SQL Entra admin (your IP allowed by the SQL firewall, `az login` done, go-sqlcmd installed;
+   from Azure Cloud Shell see [below](#running-the-sql-scripts-from-azure-cloud-shell)):
 
    ```bash
    SQL_SERVER=<sqlServerFqdn> SQL_DATABASE=<sqlDatabaseName> \
@@ -45,6 +46,36 @@ the admin group to the people who administer the database; never put analysts or
    service principal (like the deploy pipeline) can only do if the SQL server has the Directory Readers role.
 
 People then connect to the database with their own Entra account (SSMS, Azure Data Studio, VS Code `mssql`).
+
+## Running the SQL scripts from Azure Cloud Shell
+
+Cloud Shell has the Azure CLI and is already signed in, but it does not include `sqlcmd`, and it connects to SQL from its
+own public IP:
+
+```bash
+# 0. Get the scripts (the repo is public; your home folder is kept between sessions)
+git clone https://github.com/nrkey420/chromebook-agent-extension.git ~/chromebook-agent-extension
+cd ~/chromebook-agent-extension            # later: git pull to update
+
+# 1. Install go-sqlcmd into ~/bin (kept between Cloud Shell sessions)
+bash infra/scripts/install-sqlcmd.sh
+export PATH="$HOME/bin:$PATH"            # add this line to ~/.bashrc to keep it
+
+# 2. Let this Cloud Shell session through the SQL firewall (its IP changes between sessions)
+MYIP=$(curl -s https://api.ipify.org)
+az sql server firewall-rule create -g <resource-group> -s <sqlServerName> -n cloudshell \
+  --start-ip-address "$MYIP" --end-ip-address "$MYIP" -o none
+
+# 3. Run the script (it signs in with your az login)
+SQL_SERVER=<sqlServerFqdn> SQL_DATABASE=<sqlDatabaseName> INVESTIGATORS_GROUP='...' bash infra/scripts/grant-sql-roles.sh
+
+# 4. Remove the firewall rule when you are done
+az sql server firewall-rule delete -g <resource-group> -s <sqlServerName> -n cloudshell
+```
+
+The scripts find their `.sql` files relative to their own location, so they can be run from any folder, but
+they need the rest of the repo next to them: clone it rather than copying single scripts. The same applies to `init-sql.sh` and to `run-google-sync.sh` when it waits for results. `<sqlServerName>` is the
+short server name (deployment output `sqlServerName`); `SQL_SERVER` is the full name (`sqlServerFqdn`).
 
 ## Checking access
 

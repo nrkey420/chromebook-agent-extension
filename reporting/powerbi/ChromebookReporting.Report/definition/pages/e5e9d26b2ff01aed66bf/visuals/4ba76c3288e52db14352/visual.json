@@ -1,0 +1,147 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "4ba76c3288e52db14352",
+  "position": {
+    "x": 16,
+    "y": 124,
+    "z": 4000,
+    "width": 1248,
+    "height": 200,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "SyncName"
+                }
+              },
+              "queryRef": "SyncState.SyncName",
+              "nativeQueryRef": "SyncName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "LastStatus"
+                }
+              },
+              "queryRef": "SyncState.LastStatus",
+              "nativeQueryRef": "LastStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "LastRunUtc"
+                }
+              },
+              "queryRef": "SyncState.LastRunUtc",
+              "nativeQueryRef": "LastRunUtc"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "ItemsProcessed"
+                }
+              },
+              "queryRef": "SyncState.ItemsProcessed",
+              "nativeQueryRef": "ItemsProcessed"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "WatermarkUtc"
+                }
+              },
+              "queryRef": "SyncState.WatermarkUtc",
+              "nativeQueryRef": "WatermarkUtc"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "LastMessage"
+                }
+              },
+              "queryRef": "SyncState.LastMessage",
+              "nativeQueryRef": "LastMessage"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "SyncState"
+                  }
+                },
+                "Property": "SyncName"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Google sync jobs (UTC)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

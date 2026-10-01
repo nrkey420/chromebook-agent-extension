@@ -14,8 +14,11 @@ if (-not ($DeviceReadersGroup + $InvestigatorsGroup + $AuditReviewersGroup)) {
   throw 'Pass at least one of -DeviceReadersGroup, -InvestigatorsGroup, -AuditReviewersGroup.'
 }
 # The names go into an N'...' literal: double any single quote.
+# Repo layout (infra/scripts/sql/), or the .sql copied into the same folder as this script.
+$sqlFile = @((Join-Path $PSScriptRoot 'sql/grant-roles.sql'), (Join-Path $PSScriptRoot 'grant-roles.sql')) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $sqlFile) { throw "grant-roles.sql not found next to this script (looked in $PSScriptRoot/sql and $PSScriptRoot). Run from a clone of the repo, or copy infra/scripts/sql/grant-roles.sql next to this script." }
 function Q([string]$s) { $s.Replace("'", "''") }
 sqlcmd -S $SqlServer -d $SqlDatabase --authentication-method ActiveDirectoryDefault -b `
   -v "DeviceReadersGroup=$(Q $DeviceReadersGroup)" "InvestigatorsGroup=$(Q $InvestigatorsGroup)" "AuditReviewersGroup=$(Q $AuditReviewersGroup)" `
-  -i infra/scripts/sql/grant-roles.sql
+  -i $sqlFile
 if ($LASTEXITCODE -ne 0) { throw 'sqlcmd failed on grant-roles.sql' }

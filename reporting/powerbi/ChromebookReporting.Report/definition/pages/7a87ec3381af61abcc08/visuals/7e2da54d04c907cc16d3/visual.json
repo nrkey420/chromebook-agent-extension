@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "7e2da54d04c907cc16d3",
+  "position": {
+    "x": 436.0,
+    "y": 84,
+    "z": 5000,
+    "width": 198.0,
+    "height": 96,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "Reporting (7d)"
+                }
+              },
+              "queryRef": "Devices.Reporting (7d)",
+              "nativeQueryRef": "Reporting (7d)"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "8ddcdf0e9f9406398cda",
+  "position": {
+    "x": 856.0,
+    "y": 16,
+    "z": 3000,
+    "width": 408.0,
+    "height": 96,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "Ingestion errors"
+                }
+              },
+              "queryRef": "IngestionErrors.Ingestion errors",
+              "nativeQueryRef": "Ingestion errors"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

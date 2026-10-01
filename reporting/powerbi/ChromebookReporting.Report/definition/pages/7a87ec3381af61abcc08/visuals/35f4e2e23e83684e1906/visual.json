@@ -1,0 +1,237 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "35f4e2e23e83684e1906",
+  "position": {
+    "x": 16,
+    "y": 440,
+    "z": 11000,
+    "width": 1248,
+    "height": 264,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "SerialNumber"
+                }
+              },
+              "queryRef": "Devices.SerialNumber",
+              "nativeQueryRef": "SerialNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "AssetId"
+                }
+              },
+              "queryRef": "Devices.AssetId",
+              "nativeQueryRef": "AssetId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "AnnotatedLocation"
+                }
+              },
+              "queryRef": "Devices.AnnotatedLocation",
+              "nativeQueryRef": "AnnotatedLocation"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "DeviceOrgUnit"
+                }
+              },
+              "queryRef": "Devices.DeviceOrgUnit",
+              "nativeQueryRef": "DeviceOrgUnit"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "LastUserEmail"
+                }
+              },
+              "queryRef": "Devices.LastUserEmail",
+              "nativeQueryRef": "LastUserEmail"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtLastSeenLocal"
+                }
+              },
+              "queryRef": "Devices.ExtLastSeenLocal",
+              "nativeQueryRef": "ExtLastSeenLocal"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "GoogleLastSyncLocal"
+                }
+              },
+              "queryRef": "Devices.GoogleLastSyncLocal",
+              "nativeQueryRef": "GoogleLastSyncLocal"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtensionReportingStatus"
+                }
+              },
+              "queryRef": "Devices.ExtensionReportingStatus",
+              "nativeQueryRef": "ExtensionReportingStatus"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Devices"
+                  }
+                },
+                "Property": "GoogleLastSyncLocal"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Devices needing attention (right-click a serial number > Drill through > Device)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "1000ce611fe4c1c736ab",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Devices"
+              }
+            },
+            "Property": "ExtensionReportingStatus"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "s",
+              "Entity": "Devices",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Not": {
+                  "Expression": {
+                    "In": {
+                      "Expressions": [
+                        {
+                          "Column": {
+                            "Expression": {
+                              "SourceRef": {
+                                "Source": "s"
+                              }
+                            },
+                            "Property": "ExtensionReportingStatus"
+                          }
+                        }
+                      ],
+                      "Values": [
+                        [
+                          {
+                            "Literal": {
+                              "Value": "'OK'"
+                            }
+                          }
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      }
+    ]
+  }
+}

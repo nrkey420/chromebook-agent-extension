@@ -1,0 +1,171 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "df406fe515d173d27403",
+  "position": {
+    "x": 16,
+    "y": 16,
+    "z": 1000,
+    "width": 400,
+    "height": 400,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "UserEmail"
+                }
+              },
+              "queryRef": "Users.UserEmail",
+              "nativeQueryRef": "UserEmail"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "StudentId"
+                }
+              },
+              "queryRef": "Users.StudentId",
+              "nativeQueryRef": "StudentId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "UserOrgUnit"
+                }
+              },
+              "queryRef": "Users.UserOrgUnit",
+              "nativeQueryRef": "UserOrgUnit"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "IsSuspended"
+                }
+              },
+              "queryRef": "Users.IsSuspended",
+              "nativeQueryRef": "IsSuspended"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "IsArchived"
+                }
+              },
+              "queryRef": "Users.IsArchived",
+              "nativeQueryRef": "IsArchived"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "GoogleLastLoginLocal"
+                }
+              },
+              "queryRef": "Users.GoogleLastLoginLocal",
+              "nativeQueryRef": "GoogleLastLoginLocal"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "LastDeviceSerial"
+                }
+              },
+              "queryRef": "Users.LastDeviceSerial",
+              "nativeQueryRef": "LastDeviceSerial"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "LastDeviceAssetId"
+                }
+              },
+              "queryRef": "Users.LastDeviceAssetId",
+              "nativeQueryRef": "LastDeviceAssetId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "LastDeviceSeenLocal"
+                }
+              },
+              "queryRef": "Users.LastDeviceSeenLocal",
+              "nativeQueryRef": "LastDeviceSeenLocal"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'User'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

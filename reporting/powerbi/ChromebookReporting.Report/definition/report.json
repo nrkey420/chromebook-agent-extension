@@ -1,0 +1,10 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.0.0/schema.json",
+  "themeCollection": {},
+  "annotations": [
+    {
+      "name": "generatedBy",
+      "value": "chromebook-agent-extension reporting/powerbi (initial pages)"
+    }
+  ]
+}

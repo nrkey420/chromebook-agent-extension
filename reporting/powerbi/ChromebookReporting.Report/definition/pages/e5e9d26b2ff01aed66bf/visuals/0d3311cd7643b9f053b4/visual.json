@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "0d3311cd7643b9f053b4",
+  "position": {
+    "x": 16.0,
+    "y": 16,
+    "z": 1000,
+    "width": 408.0,
+    "height": 96,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "Failed sync jobs"
+                }
+              },
+              "queryRef": "SyncState.Failed sync jobs",
+              "nativeQueryRef": "Failed sync jobs"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

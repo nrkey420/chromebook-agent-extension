@@ -13,6 +13,8 @@
 #   GOOGLE_DEVICE_ORG_UNIT      limit the device sync to one OU (e.g. the pilot OU)
 #   GOOGLE_STUDENT_ID_SOURCE    none | emailLocalPart | externalId[:type] | customSchema:Schema.Field
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)" # repo root, so the script works from any folder
 RG=${1:-rg-chromebook-poc}
 LOC=${2:-eastus}
 : "${HMAC_KEY_B64:?set HMAC_KEY_B64 (e.g. openssl rand -base64 32)}"
@@ -36,8 +38,8 @@ EXTRA_PARAMS=()
 EXTRA_PARAMS+=(googleAdminEmail="${GOOGLE_ADMIN_EMAIL:-}" googleDeviceOrgUnit="${GOOGLE_DEVICE_ORG_UNIT:-}")
 [[ -n "${GOOGLE_STUDENT_ID_SOURCE:-}" ]] && EXTRA_PARAMS+=(googleStudentIdSource="$GOOGLE_STUDENT_ID_SOURCE")
 az group create -n "$RG" -l "$LOC" >/dev/null
-az deployment group create -g "$RG" -f infra/bicep/main.bicep \
-  -p @infra/bicep/main.parameters.json \
+az deployment group create -g "$RG" -f "$ROOT/infra/bicep/main.bicep" \
+  -p "@$ROOT/infra/bicep/main.parameters.json" \
   -p location="$LOC" hmacKey="$HMAC_KEY_B64" \
      sqlEntraAdminObjectId="$SQL_ADMIN_ID" sqlEntraAdminName="$SQL_ADMIN_NAME" sqlEntraAdminPrincipalType="$SQL_ADMIN_TYPE" \
      ${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"} \

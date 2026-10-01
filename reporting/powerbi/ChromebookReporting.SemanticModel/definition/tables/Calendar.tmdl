@@ -1,0 +1,56 @@
+/// Local dates covered by the loaded login history.
+table Calendar
+	lineageTag: 7df1924f-2436-8a78-d35b-2cd50b262acf
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: yyyy-mm-dd
+		lineageTag: 857bf1c1-28e9-39c4-4a46-2429a68852df
+		summarizeBy: none
+		sourceColumn: Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 1aa36ca2-cc2f-a12d-15c6-1d7420dc974d
+		summarizeBy: none
+		sourceColumn: Year
+
+	column Month
+		dataType: string
+		lineageTag: fc40f17b-4a99-8341-4e93-4ac347c90bb7
+		summarizeBy: none
+		sourceColumn: Month
+
+	column Weekday
+		dataType: string
+		lineageTag: d52eb68e-0db2-17e5-147e-4a30d8a7aae6
+		summarizeBy: none
+		sourceColumn: Weekday
+		sortByColumn: WeekdayNumber
+
+	column WeekdayNumber
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9004a91c-89dd-db9d-229d-799cbf1ade14
+		summarizeBy: none
+		sourceColumn: WeekdayNumber
+
+	partition Calendar = m
+		mode: import
+		source =
+				let
+				    End = Date.From(DateTimeZone.RemoveZone(DateTimeZone.UtcNow())),
+				    Start = Date.AddDays(End, -LoginHistoryDays),
+				    Dates = List.Dates(Start, Duration.Days(End - Start) + 1, #duration(1, 0, 0, 0)),
+				    Base = Table.FromList(Dates, Splitter.SplitByNothing(), type table [Date = date]),
+				    WithYear = Table.AddColumn(Base, "Year", each Date.Year([Date]), Int64.Type),
+				    WithMonth = Table.AddColumn(WithYear, "Month", each Date.ToText([Date], [Format = "yyyy-MM", Culture = "en-US"]), type text),
+				    WithWeekday = Table.AddColumn(WithMonth, "Weekday", each Date.DayOfWeekName([Date], "en-US"), type text),
+				    WithWeekdayNumber = Table.AddColumn(WithWeekday, "WeekdayNumber", each Date.DayOfWeek([Date], Day.Monday) + 1, Int64.Type)
+				in
+				    WithWeekdayNumber
+

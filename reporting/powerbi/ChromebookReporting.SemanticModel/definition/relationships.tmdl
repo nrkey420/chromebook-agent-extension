@@ -1,0 +1,12 @@
+relationship 9fc84db8-1b69-2c9d-5f47-2105a3494bb4
+	fromColumn: Logins.DirectoryDeviceId
+	toColumn: Devices.DirectoryDeviceId
+
+relationship 49c8525c-bcf2-6c80-d571-6744e7f48573
+	fromColumn: Logins.UserEmail
+	toColumn: Users.UserEmail
+
+relationship 90f3643f-ec02-6a75-3d5e-928e4c9217fc
+	fromColumn: Logins.EventDate
+	toColumn: Calendar.Date
+

@@ -1,0 +1,64 @@
+/// Last run of each Google sync job.
+table SyncState
+	lineageTag: a1d894f6-b245-6a28-7528-dfeb596e8af9
+
+	measure 'Failed sync jobs' = CALCULATE ( COUNTROWS ( SyncState ), SyncState[LastStatus] = "FAILED" )
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: 08c4539e-afca-bb44-0a56-b001284ecc75
+
+	/// Age of the oldest last run across the selected jobs.
+	measure 'Hours since last sync' = DATEDIFF ( MIN ( SyncState[LastRunUtc] ), UTCNOW (), HOUR )
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: 385720c5-b462-46ba-192d-cec1ebcf306b
+
+	column SyncName
+		dataType: string
+		lineageTag: d1122733-f6be-d7f1-81ec-b2e766502856
+		summarizeBy: none
+		sourceColumn: SyncName
+
+	column WatermarkUtc
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 7b9a94e8-dba3-05a3-3cfa-d564f37de796
+		summarizeBy: none
+		sourceColumn: WatermarkUtc
+
+	column LastRunUtc
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 65e2489e-bc06-7fa4-6b81-cc4a705bb000
+		summarizeBy: none
+		sourceColumn: LastRunUtc
+
+	column LastStatus
+		dataType: string
+		lineageTag: 9601b4c6-aaab-f358-05b9-3870427f605a
+		summarizeBy: none
+		sourceColumn: LastStatus
+
+	column LastMessage
+		dataType: string
+		lineageTag: 70b0f7a5-9892-918f-a214-7d1e519f719a
+		summarizeBy: none
+		sourceColumn: LastMessage
+
+	column ItemsProcessed
+		dataType: int64
+		formatString: 0
+		lineageTag: 375b7eae-bd48-3e77-0959-ac55a6d59604
+		summarizeBy: none
+		sourceColumn: ItemsProcessed
+
+	partition SyncState = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database(SqlServer, SqlDatabase),
+				    View = Source{[Schema = "dbo", Item = "SyncState"]}[Data],
+				    Selected = Table.SelectColumns(View, {"SyncName", "WatermarkUtc", "LastRunUtc", "LastStatus", "LastMessage", "ItemsProcessed"})
+				in
+				    Selected
+

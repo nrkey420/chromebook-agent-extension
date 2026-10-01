@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "5eb2e4052d5a9197a8c0",
+  "position": {
+    "x": 840,
+    "y": 16,
+    "z": 3000,
+    "width": 200,
+    "height": 56,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Devices used"
+                }
+              },
+              "queryRef": "Logins.Devices used",
+              "nativeQueryRef": "Devices used"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

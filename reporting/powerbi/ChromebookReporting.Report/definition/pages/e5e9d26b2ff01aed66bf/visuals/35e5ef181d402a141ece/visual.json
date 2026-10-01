@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "35e5ef181d402a141ece",
+  "position": {
+    "x": 16,
+    "y": 336,
+    "z": 5000,
+    "width": 500,
+    "height": 368,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "ErrorDate"
+                }
+              },
+              "queryRef": "IngestionErrors.ErrorDate",
+              "nativeQueryRef": "ErrorDate"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "Ingestion errors"
+                }
+              },
+              "queryRef": "IngestionErrors.Ingestion errors",
+              "nativeQueryRef": "Ingestion errors"
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "Layer"
+                }
+              },
+              "queryRef": "IngestionErrors.Layer",
+              "nativeQueryRef": "Layer"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Collector errors per day (last 30 days, UTC)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

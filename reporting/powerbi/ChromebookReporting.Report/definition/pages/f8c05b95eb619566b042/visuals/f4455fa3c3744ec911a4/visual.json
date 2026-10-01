@@ -1,0 +1,91 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "f4455fa3c3744ec911a4",
+  "position": {
+    "x": 16,
+    "y": 192,
+    "z": 9000,
+    "width": 616,
+    "height": 236,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Calendar"
+                    }
+                  },
+                  "Property": "Date"
+                }
+              },
+              "queryRef": "Calendar.Date",
+              "nativeQueryRef": "Date"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "ChromeOS logins"
+                }
+              },
+              "queryRef": "Logins.ChromeOS logins",
+              "nativeQueryRef": "ChromeOS logins"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Extension sessions"
+                }
+              },
+              "queryRef": "Logins.Extension sessions",
+              "nativeQueryRef": "Extension sessions"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Logins per day'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

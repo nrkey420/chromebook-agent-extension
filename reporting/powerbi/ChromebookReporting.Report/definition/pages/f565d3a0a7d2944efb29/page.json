@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "f565d3a0a7d2944efb29",
+  "displayName": "User",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "type": "Drillthrough",
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "920a52d4141329b0f589",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Users"
+              }
+            },
+            "Property": "UserEmail"
+          }
+        },
+        "type": "Categorical",
+        "howCreated": "Drillthrough"
+      }
+    ]
+  },
+  "pageBinding": {
+    "name": "8aaaa894-c9ca-6396-fe57-e05c287c8042",
+    "type": "Drillthrough",
+    "referenceScope": "Default",
+    "parameters": [
+      {
+        "name": "076bfed4-cf34-d874-aa9a-9803b04ef1ca",
+        "boundFilter": "920a52d4141329b0f589",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Users"
+              }
+            },
+            "Property": "UserEmail"
+          }
+        }
+      }
+    ]
+  }
+}

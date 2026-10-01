@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "94a7f6d2394c0d5444ff",
+  "position": {
+    "x": 644,
+    "y": 192,
+    "z": 10000,
+    "width": 620,
+    "height": 236,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "EventHour"
+                }
+              },
+              "queryRef": "Logins.EventHour",
+              "nativeQueryRef": "EventHour"
+            }
+          ]
+        },
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Weekday"
+                }
+              },
+              "queryRef": "Logins.Weekday",
+              "nativeQueryRef": "Weekday"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "ChromeOS logins"
+                }
+              },
+              "queryRef": "Logins.ChromeOS logins",
+              "nativeQueryRef": "ChromeOS logins"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'ChromeOS logins by hour and weekday (local time)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

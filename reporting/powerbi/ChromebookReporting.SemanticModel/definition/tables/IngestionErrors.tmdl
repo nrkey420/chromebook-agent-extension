@@ -1,0 +1,61 @@
+/// Collector errors (SQL or Sentinel writes) in the last 30 days.
+table IngestionErrors
+	lineageTag: b866678f-f4fd-80f2-ef06-5324040e51c0
+
+	measure 'Ingestion errors' = COUNTROWS ( IngestionErrors )
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: 8973d426-bfd1-dd65-662f-4791b9b8337d
+
+	column ErrorTimeUtc
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 675cd6e0-3c34-b293-8d7f-db2183131581
+		summarizeBy: none
+		sourceColumn: ErrorTimeUtc
+
+	column Layer
+		dataType: string
+		lineageTag: 70932189-5a59-051c-1ff1-c8c6d5132b70
+		summarizeBy: none
+		sourceColumn: Layer
+
+	column ErrorCode
+		dataType: string
+		lineageTag: 1911f224-01ef-24bc-c24f-6d787d01df73
+		summarizeBy: none
+		sourceColumn: ErrorCode
+
+	column ErrorMessage
+		dataType: string
+		lineageTag: 43d39165-64d6-633c-f3ce-1d113056031a
+		summarizeBy: none
+		sourceColumn: ErrorMessage
+
+	column CorrelationId
+		dataType: string
+		lineageTag: 11db0b0f-506e-ab95-78a8-09fd0b4fc94d
+		summarizeBy: none
+		sourceColumn: CorrelationId
+
+	/// UTC date of the error.
+	column ErrorDate
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 9a87a20f-ae1c-7cc0-977d-304cc881b78d
+		summarizeBy: none
+		sourceColumn: ErrorDate
+
+	partition IngestionErrors = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database(SqlServer, SqlDatabase),
+				    View = Source{[Schema = "dbo", Item = "IngestionErrors"]}[Data],
+				    Selected = Table.SelectColumns(View, {"ErrorTimeUtc", "Layer", "ErrorCode", "ErrorMessage", "CorrelationId"}),
+				    Since = DateTimeZone.RemoveZone(DateTimeZone.UtcNow()) - #duration(30, 0, 0, 0),
+				    Recent = Table.SelectRows(Selected, each [ErrorTimeUtc] >= Since),
+				    WithDate = Table.AddColumn(Recent, "ErrorDate", each Date.From([ErrorTimeUtc]), type date)
+				in
+				    WithDate
+
