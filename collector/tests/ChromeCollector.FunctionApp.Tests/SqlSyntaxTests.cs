@@ -22,7 +22,7 @@ public class SqlSyntaxTests
     }
 
     public static IEnumerable<object[]> SchemaScripts() =>
-        new[] { "001_tables.sql", "002_views.sql", "003_procedures.sql" }.Select(f => new object[] { f });
+        new[] { "001_tables.sql", "002_views.sql", "003_procedures.sql", "004_security.sql" }.Select(f => new object[] { f });
 
     [Theory]
     [MemberData(nameof(SchemaScripts))]
@@ -49,6 +49,15 @@ public class SqlSyntaxTests
         var sql = File.ReadAllText(path);
         sql.Should().Contain("$(FunctionAppName)");
         AssertParses(sql.Replace("$(FunctionAppName)", "scpschrome-func-poc"));
+    }
+
+    [Fact]
+    public void GrantRolesScript_Parses()
+    {
+        var repoRoot = Path.GetFullPath(Path.Combine(SqlDirectory, "..", "..", "..", ".."));
+        var sql = File.ReadAllText(Path.Combine(repoRoot, "infra", "scripts", "sql", "grant-roles.sql"));
+        sql.Should().Contain("$(DeviceReadersGroup)").And.Contain("$(InvestigatorsGroup)").And.Contain("$(AuditReviewersGroup)");
+        AssertParses(sql.Replace("$(DeviceReadersGroup)", "Helpdesk").Replace("$(InvestigatorsGroup)", "IR Team").Replace("$(AuditReviewersGroup)", ""));
     }
 
     [Theory]

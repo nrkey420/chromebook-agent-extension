@@ -16,6 +16,7 @@ Google Admin SDK (devices, users, sign-in audit) → timer functions in the same
 8. Optional but needed for full reporting: set up the Google sync (device inventory, student IDs, Google sign-in events): `docs/google-sync.md`.
 9. Connect Power BI DirectQuery to SQL views (`vw_*`).
 10. Investigations (device/user timelines, who was on an IP, web activity for a case): `docs/investigations.md`.
+11. Give people access through the database roles (helpdesk, investigators, audit reviewers): `docs/sql-access.md`.
 
 ## Continuous deployment
 Pushes to `main` that change `collector/` or `infra/` deploy to Azure via GitHub Actions (`.github/workflows/deploy.yml`). One-time setup: `docs/github-actions-deploy.md`.

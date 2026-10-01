@@ -2,7 +2,8 @@
 
 Investigation procedures live in Azure SQL (`collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql`).
 Connect with your Entra account (SSMS, Azure Data Studio, or VS Code with the `mssql` extension) to the database
-from the deployment output `sqlDatabaseName`.
+from the deployment output `sqlDatabaseName`. You need to be in the investigators group (`docs/sql-access.md`); the
+audit-review queries below need the audit reviewers group.
 
 **Every run is recorded** in `dbo.InvestigationAudit`: who ran it (your sign-in), when, the case number, the filters,
 and for web activity the number of rows returned. Always pass the ticket/case number.
@@ -79,6 +80,6 @@ FROM dbo.InvestigationAudit WHERE RunUtc >= DATEADD(month, -1, SYSUTCDATETIME())
 GROUP BY RunBy, ProcedureName ORDER BY Runs DESC;
 ```
 
-The audit only proves something while investigators cannot edit it and cannot read the tables directly. Until the
-roles in `docs/plans/reporting-and-dashboards.md` (section 5) are in place, anyone with direct table access can
-query around the procedures — set those roles up before giving analysts access.
+The audit only proves something while investigators cannot edit it and cannot read web activity directly. Give
+analysts access through the `ChromebookInvestigators` role and audit reviewers through `ChromebookAuditReviewers`
+(`docs/sql-access.md`), never through the SQL admin group.

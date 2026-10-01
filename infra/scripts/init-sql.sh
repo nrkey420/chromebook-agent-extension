@@ -16,7 +16,7 @@ set -euo pipefail
 SQLCMD=${SQLCMD:-sqlcmd}
 : "${SQL_SERVER:?set SQL_SERVER}"; : "${SQL_DATABASE:?set SQL_DATABASE}"; : "${FUNCTION_APP_NAME:?set FUNCTION_APP_NAME}"
 AUTH=(--authentication-method ActiveDirectoryDefault)
-for f in collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql; do
+for f in collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql collector/src/ChromeCollector.FunctionApp/Sql/004_security.sql; do
   echo "Applying $f"
   $SQLCMD -S "$SQL_SERVER" -d "$SQL_DATABASE" "${AUTH[@]}" -b -i "$f"
 done

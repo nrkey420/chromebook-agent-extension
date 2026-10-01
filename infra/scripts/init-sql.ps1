@@ -10,7 +10,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $auth = @('--authentication-method', 'ActiveDirectoryDefault')
-$files = @('collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql')
+$files = @('collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/004_security.sql')
 foreach ($f in $files) {
   Write-Host "Applying $f"
   sqlcmd -S $SqlServer -d $SqlDatabase @auth -b -i $f
