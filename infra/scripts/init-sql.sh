@@ -14,6 +14,10 @@
 #                             can only do if the SQL server has Directory Readers. Run the grant once as a person.
 set -euo pipefail
 SQLCMD=${SQLCMD:-sqlcmd}
+if ! command -v "$SQLCMD" >/dev/null 2>&1; then
+  echo "sqlcmd not found. Install go-sqlcmd with: bash infra/scripts/install-sqlcmd.sh (see docs/sql-access.md)." >&2
+  exit 1
+fi
 : "${SQL_SERVER:?set SQL_SERVER}"; : "${SQL_DATABASE:?set SQL_DATABASE}"; : "${FUNCTION_APP_NAME:?set FUNCTION_APP_NAME}"
 AUTH=(--authentication-method ActiveDirectoryDefault)
 for f in collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql collector/src/ChromeCollector.FunctionApp/Sql/004_security.sql; do

@@ -12,6 +12,10 @@
 #   AUDIT_REVIEWERS_GROUP  IR lead / compliance
 set -euo pipefail
 SQLCMD=${SQLCMD:-sqlcmd}
+if ! command -v "$SQLCMD" >/dev/null 2>&1; then
+  echo "sqlcmd not found. Install go-sqlcmd with: bash infra/scripts/install-sqlcmd.sh (see docs/sql-access.md)." >&2
+  exit 1
+fi
 : "${SQL_SERVER:?set SQL_SERVER}"; : "${SQL_DATABASE:?set SQL_DATABASE}"
 if [[ -z "${DEVICE_READERS_GROUP:-}${INVESTIGATORS_GROUP:-}${AUDIT_REVIEWERS_GROUP:-}" ]]; then
   echo "Set at least one of DEVICE_READERS_GROUP, INVESTIGATORS_GROUP, AUDIT_REVIEWERS_GROUP." >&2
