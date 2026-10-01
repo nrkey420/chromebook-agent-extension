@@ -65,9 +65,10 @@ shred -u ./chromebook-sync-key.json   # or delete it securely
 Then set the Google settings **through the deployment**, not in the portal (a later deploy would overwrite portal
 edits):
 
-- **GitHub Actions deploy:** add repository *variables* (Settings → Secrets and variables → Actions → Variables):
-  `GOOGLE_ADMIN_EMAIL` (required), and optionally `GOOGLE_DEVICE_ORG_UNIT`, `GOOGLE_STUDENT_ID_SOURCE`. Re-run the
-  **Deploy to Azure** workflow.
+- **GitHub Actions deploy:** add `GOOGLE_ADMIN_EMAIL` as a repository **secret** (Settings → Secrets and variables →
+  Actions → Secrets), so it is masked in the public workflow logs. Optionally add the *variables*
+  `GOOGLE_DEVICE_ORG_UNIT` and `GOOGLE_STUDENT_ID_SOURCE`. Re-run the **Deploy to Azure** workflow. (A
+  `GOOGLE_ADMIN_EMAIL` *variable* still works but is shown in the logs; move it to Secrets and delete the variable.)
 - **Manual deploy:** `GOOGLE_ADMIN_EMAIL=svc-chromebook-sync@district.org bash infra/scripts/deploy-bicep.sh <rg> <location>`
   (PowerShell: `-GoogleAdminEmail`).
 
