@@ -4,6 +4,8 @@
 # Optional (default to the signed-in `az` user; required when running as a service principal):
 #   -SqlEntraAdminObjectId / -SqlEntraAdminName / -SqlEntraAdminType (User|Group|Application)
 #   -KeyVaultAdminObjectId (granted Key Vault Secrets Officer)
+# Optional Google sync settings (docs/google-sync.md); the sync stays off without -GoogleAdminEmail:
+#   -GoogleAdminEmail / -GoogleDeviceOrgUnit / -GoogleStudentIdSource (or env GOOGLE_ADMIN_EMAIL, ...)
 param(
   [string]$ResourceGroup = 'rg-chromebook-poc',
   [string]$Location = 'eastus',
@@ -11,7 +13,10 @@ param(
   [string]$SqlEntraAdminObjectId = $env:SQL_ENTRA_ADMIN_OBJECT_ID,
   [string]$SqlEntraAdminName = $env:SQL_ENTRA_ADMIN_NAME,
   [string]$SqlEntraAdminType = $(if ($env:SQL_ENTRA_ADMIN_TYPE) { $env:SQL_ENTRA_ADMIN_TYPE } else { 'User' }),
-  [string]$KeyVaultAdminObjectId = $env:KEYVAULT_ADMIN_OBJECT_ID
+  [string]$KeyVaultAdminObjectId = $env:KEYVAULT_ADMIN_OBJECT_ID,
+  [string]$GoogleAdminEmail = $env:GOOGLE_ADMIN_EMAIL,
+  [string]$GoogleDeviceOrgUnit = $env:GOOGLE_DEVICE_ORG_UNIT,
+  [string]$GoogleStudentIdSource = $env:GOOGLE_STUDENT_ID_SOURCE
 )
 $ErrorActionPreference = 'Stop'
 if (-not $HmacKeyB64) { throw 'Provide -HmacKeyB64 or set HMAC_KEY_B64.' }
@@ -33,6 +38,9 @@ $params = @(
   "sqlEntraAdminObjectId=$SqlEntraAdminObjectId", "sqlEntraAdminName=$SqlEntraAdminName", "sqlEntraAdminPrincipalType=$SqlEntraAdminType"
 )
 if ($KeyVaultAdminObjectId) { $params += "keyVaultAdminObjectId=$KeyVaultAdminObjectId" }
+# Always passed, so a redeploy keeps the Google settings in step with what the caller provides.
+$params += "googleAdminEmail=$GoogleAdminEmail", "googleDeviceOrgUnit=$GoogleDeviceOrgUnit"
+if ($GoogleStudentIdSource) { $params += "googleStudentIdSource=$GoogleStudentIdSource" }
 az group create -n $ResourceGroup -l $Location | Out-Null
 az deployment group create -g $ResourceGroup -f infra/bicep/main.bicep `
   -p '@infra/bicep/main.parameters.json' `

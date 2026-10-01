@@ -272,3 +272,22 @@ CREATE TABLE dbo.IngestionErrors (
   BlobPath nvarchar(1024) NULL
 );
 GO
+
+-- Who ran which investigation procedure, for which case, with which filters, and how many rows came back.
+-- Written by the usp_* procedures themselves; investigators get EXECUTE on the procedures, not write access here.
+IF OBJECT_ID('dbo.InvestigationAudit', 'U') IS NULL
+CREATE TABLE dbo.InvestigationAudit (
+  InvestigationAuditId bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,
+  RunUtc datetime2 NOT NULL CONSTRAINT DF_InvestigationAudit_RunUtc DEFAULT SYSUTCDATETIME(),
+  RunBy nvarchar(256) NOT NULL CONSTRAINT DF_InvestigationAudit_RunBy DEFAULT ORIGINAL_LOGIN(),
+  CaseNumber nvarchar(64) NULL,
+  ProcedureName nvarchar(128) NOT NULL,
+  Parameters nvarchar(2000) NULL,
+  RowsReturned int NULL
+);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_InvestigationAudit_Case')
+  CREATE INDEX IX_InvestigationAudit_Case ON dbo.InvestigationAudit (CaseNumber, RunUtc);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_InvestigationAudit_RunBy_Time')
+  CREATE INDEX IX_InvestigationAudit_RunBy_Time ON dbo.InvestigationAudit (RunBy, RunUtc);
+GO

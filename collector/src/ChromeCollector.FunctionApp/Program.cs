@@ -40,6 +40,11 @@ var host = new HostBuilder()
         services.AddSingleton<IBlobWriter, BlobWriter>();
         services.AddHostedService<ContainerBootstrapHostedService>();
 
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IGoogleAdminSource, GoogleAdminSource>();
+        services.AddSingleton<IGoogleSyncStore, GoogleSyncStore>();
+        services.AddSingleton<IGoogleSyncService, GoogleSyncService>();
+
     })
     .Build();
 

@@ -9,6 +9,10 @@
     "DCE_ENDPOINT": "https://<your-dce>.<region>-1.ingest.monitor.azure.com",
     "DCR_IMMUTABLE_ID": "dcr-xxxxxxxxxxxxxxxx",
     "DCR_STREAM_NAME": "Custom-ChromebookActivity_CL",
-    "LOGS_INGESTION_RESOURCE": "https://monitor.azure.com/"
+    "LOGS_INGESTION_RESOURCE": "https://monitor.azure.com/",
+    "GOOGLE_SERVICE_ACCOUNT_JSON": "",
+    "GOOGLE_ADMIN_EMAIL": "",
+    "GOOGLE_DEVICE_ORG_UNIT": "",
+    "GOOGLE_STUDENT_ID_SOURCE": "externalId:organization"
   }
 }

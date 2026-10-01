@@ -3,6 +3,7 @@ Azure-native PoC for Chromebook session attribution, browser activity telemetry,
 
 ## Architecture
 Chrome Extension (MV3) → Azure Function collector (.NET 8 isolated) → Blob raw JSONL + Azure SQL + Sentinel Logs Ingestion.
+Google Admin SDK (devices, users, sign-in audit) → timer functions in the same app → Azure SQL.
 
 ## Quickstart
 1. Deploy infra: `infra/scripts/deploy-bicep.sh`.
@@ -12,7 +13,9 @@ Chrome Extension (MV3) → Azure Function collector (.NET 8 isolated) → Blob r
 5. Package extension: `extension/tools/pack.sh`.
 6. Force install extension and managed policy (see `infra/scripts/set-extension-policy.md`).
 7. Verify blob/SQL/Sentinel with `infra/scripts/send-test-batch.sh`.
-8. Connect Power BI DirectQuery to SQL views (`vw_*`).
+8. Optional but needed for full reporting: set up the Google sync (device inventory, student IDs, Google sign-in events): `docs/google-sync.md`.
+9. Connect Power BI DirectQuery to SQL views (`vw_*`).
+10. Investigations (device/user timelines, who was on an IP, web activity for a case): `docs/investigations.md`.
 
 ## Continuous deployment
 Pushes to `main` that change `collector/` or `infra/` deploy to Azure via GitHub Actions (`.github/workflows/deploy.yml`). One-time setup: `docs/github-actions-deploy.md`.
@@ -25,3 +28,4 @@ Azure CLI, .NET 8 SDK, go-sqlcmd (Azure SQL uses Microsoft Entra-only auth), Chr
 - `collector/` Azure Function collector + SQL scripts + tests.
 - `infra/` Bicep + deployment scripts.
 - `docs/` architecture, data model, privacy, operations, Sentinel, Power BI.
+- `docs/plans/` test plan, IR reporting and dashboards, scaling to 50k devices and the Chrome Web Store move.
