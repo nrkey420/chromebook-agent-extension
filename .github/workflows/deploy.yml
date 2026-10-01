@@ -86,17 +86,20 @@ jobs:
           SQL_ENTRA_ADMIN_OBJECT_ID: ${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
           SQL_ENTRA_ADMIN_NAME: ${{ secrets.SQL_ENTRA_ADMIN_NAME }}
           SQL_ENTRA_ADMIN_TYPE: ${{ secrets.SQL_ENTRA_ADMIN_TYPE }}
-          # Google sync (optional; docs/google-sync.md). Repository variables, not secrets.
-          GOOGLE_ADMIN_EMAIL: ${{ vars.GOOGLE_ADMIN_EMAIL }}
+          # Google sync (optional; docs/google-sync.md). The admin email is read from a secret so it is masked in
+          # this public repo's logs; the variable is only a fallback until it has been moved to Secrets.
+          GOOGLE_ADMIN_EMAIL: ${{ secrets.GOOGLE_ADMIN_EMAIL || vars.GOOGLE_ADMIN_EMAIL }}
           GOOGLE_DEVICE_ORG_UNIT: ${{ vars.GOOGLE_DEVICE_ORG_UNIT }}
           GOOGLE_STUDENT_ID_SOURCE: ${{ vars.GOOGLE_STUDENT_ID_SOURCE }}
         run: |
           outputs=$(bash infra/scripts/deploy-bicep.sh "$AZURE_RESOURCE_GROUP" "$AZURE_LOCATION")
+          # Logs of a public repo are public: mask the resource names (they stay usable as step outputs).
           for key in functionAppName functionHostname sqlServerName sqlServerFqdn sqlDatabaseName keyVaultName; do
             value=$(jq -r --arg k "$key" '.[$k].value' <<<"$outputs")
+            echo "::add-mask::$value"
             echo "$key=$value" >> "$GITHUB_OUTPUT"
-            echo "$key: $value"
           done
+          echo "Infrastructure deployed (resource names are masked in this public log)."
 
       - name: Install go-sqlcmd
         run: |
@@ -149,4 +152,4 @@ jobs:
           curl -fsS --retry 10 --retry-delay 15 --retry-all-errors \
             "https://${{ steps.infra.outputs.functionHostname }}/api/health"
           echo
-          echo "Deployed to https://${{ steps.infra.outputs.functionHostname }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployed; health check passed." >> "$GITHUB_STEP_SUMMARY"

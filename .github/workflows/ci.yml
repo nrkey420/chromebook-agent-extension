@@ -5,6 +5,10 @@ on:
   push:
     branches: [ main, work ]
 
+# Tests only: no write access and no secrets (pull requests from forks run this workflow).
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest

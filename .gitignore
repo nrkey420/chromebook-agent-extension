@@ -59,3 +59,21 @@ collector.zip
 
 # Extension packaging output
 extension/dist/
+
+# Never commit credentials or signing material (this repository is public).
+*.pem
+*.key
+*.pfx
+*.p12
+*.crx
+*.publishsettings
+.env
+.env.*
+**/*service-account*.json
+**/*serviceaccount*.json
+# Power BI Desktop local files (cached data and per-user settings)
+**/.pbi/cache.abf
+**/.pbi/localSettings.json
+# Load simulator result files
+tools/load-simulator/*.json
+!tools/load-simulator/package.json
