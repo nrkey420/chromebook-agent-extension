@@ -12,8 +12,9 @@ public sealed record GoogleSyncOptions
     public const string AuditLogin = "login";
 
     // ChromeOS sign-in events; the Reports API filters by one event name per request.
+    // Google's docs also list CHROME_OS_LOGIN_LOGOUT_EVENT, but the API rejects it as a filter ("not found in manifest").
     public static readonly string[] DefaultChromeEventNames =
-        ["CHROME_OS_LOGIN_EVENT", "CHROME_OS_LOGOUT_EVENT", "CHROME_OS_LOGIN_FAILURE_EVENT", "CHROME_OS_LOGIN_LOGOUT_EVENT"];
+        ["CHROME_OS_LOGIN_EVENT", "CHROME_OS_LOGOUT_EVENT", "CHROME_OS_LOGIN_FAILURE_EVENT"];
 
     /// <summary>Service account key JSON (Key Vault reference in Azure).</summary>
     public string? ServiceAccountJson { get; init; }

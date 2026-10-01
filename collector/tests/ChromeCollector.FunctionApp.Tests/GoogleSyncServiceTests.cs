@@ -76,9 +76,52 @@ public class GoogleSyncServiceTests
 
         source.Calls.Should().Equal(GoogleSyncOptions.DefaultChromeEventNames.Select(n => $"chrome:{n}:{Now.AddMinutes(-195):o}:{Now:o}"));
         store.AuditEvents.Select(e => e.EventName).Should().Equal(GoogleSyncOptions.DefaultChromeEventNames);
-        result.Items.Should().Be(4);
+        result.Items.Should().Be(GoogleSyncOptions.DefaultChromeEventNames.Length);
         result.WatermarkUtc.Should().Be(Now);
     }
+
+    [Fact]
+    public async Task ChromeAudit_EventNameGoogleRejects_IsSkipped_OthersSync_AndRunSucceedsWithMessage()
+    {
+        var settings = new Dictionary<string, string?>(ConfiguredSettings)
+        {
+            ["GOOGLE_CHROME_EVENT_NAMES"] = "CHROME_OS_LOGIN_EVENT,CHROME_OS_LOGIN_LOGOUT_EVENT,CHROME_OS_LOGOUT_EVENT",
+        };
+        var (service, source, store) = Create(settings);
+        source.Activities = (_, eventName) => eventName == "CHROME_OS_LOGIN_LOGOUT_EVENT"
+            ? throw GoogleError($"Invalid request: Event {eventName} not found in manifest.")
+            : [GoogleMapperTests.Activity("chrome", null, null, GoogleMapperTests.Event(eventName!, "CHROME_OS_LOGIN_LOGOUT_TYPE"))];
+
+        var result = await service.SyncAuditAsync("chrome", CancellationToken.None);
+
+        store.AuditEvents.Select(e => e.EventName).Should().Equal("CHROME_OS_LOGIN_EVENT", "CHROME_OS_LOGOUT_EVENT");
+        result.Status.Should().Be("SUCCESS");
+        result.WatermarkUtc.Should().Be(Now);
+        result.Message.Should().Contain("CHROME_OS_LOGIN_LOGOUT_EVENT");
+        store.Runs.Should().ContainSingle().Which.Item3.Should().Contain("CHROME_OS_LOGIN_LOGOUT_EVENT");
+    }
+
+    [Fact]
+    public async Task ChromeAudit_OtherBadRequest_StillFailsTheRun()
+    {
+        var (service, source, store) = Create(ConfiguredSettings);
+        source.Activities = (_, _) => throw GoogleError("Invalid request: Start time must be before end time.");
+
+        var act = () => service.SyncAuditAsync("chrome", CancellationToken.None);
+
+        await act.Should().ThrowAsync<Google.GoogleApiException>();
+        store.Runs.Should().ContainSingle().Which.Item2.Should().Be("FAILED");
+    }
+
+    [Fact]
+    public void DefaultChromeEventNames_ExcludeTheNameTheApiRejects()
+    {
+        GoogleSyncOptions.DefaultChromeEventNames.Should().Equal("CHROME_OS_LOGIN_EVENT", "CHROME_OS_LOGOUT_EVENT", "CHROME_OS_LOGIN_FAILURE_EVENT");
+    }
+
+    // Same shape as the error Google returned in production.
+    private static Google.GoogleApiException GoogleError(string message) =>
+        new("admin", message) { HttpStatusCode = System.Net.HttpStatusCode.BadRequest };
 
     [Fact]
     public async Task LoginAudit_WithoutEventNames_ListsAllEventsOnce()
