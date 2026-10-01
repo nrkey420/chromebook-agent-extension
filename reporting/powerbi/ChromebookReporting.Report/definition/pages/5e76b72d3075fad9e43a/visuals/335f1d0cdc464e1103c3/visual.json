@@ -1,0 +1,269 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "335f1d0cdc464e1103c3",
+  "position": {
+    "x": 16,
+    "y": 16,
+    "z": 1000,
+    "width": 400,
+    "height": 688,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "SerialNumber"
+                }
+              },
+              "queryRef": "Devices.SerialNumber",
+              "nativeQueryRef": "SerialNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "AssetId"
+                }
+              },
+              "queryRef": "Devices.AssetId",
+              "nativeQueryRef": "AssetId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "AnnotatedLocation"
+                }
+              },
+              "queryRef": "Devices.AnnotatedLocation",
+              "nativeQueryRef": "AnnotatedLocation"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "DeviceOrgUnit"
+                }
+              },
+              "queryRef": "Devices.DeviceOrgUnit",
+              "nativeQueryRef": "DeviceOrgUnit"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "Model"
+                }
+              },
+              "queryRef": "Devices.Model",
+              "nativeQueryRef": "Model"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "OsVersion"
+                }
+              },
+              "queryRef": "Devices.OsVersion",
+              "nativeQueryRef": "OsVersion"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "AutoUpdateThrough"
+                }
+              },
+              "queryRef": "Devices.AutoUpdateThrough",
+              "nativeQueryRef": "AutoUpdateThrough"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "GoogleStatus"
+                }
+              },
+              "queryRef": "Devices.GoogleStatus",
+              "nativeQueryRef": "GoogleStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "LastUserEmail"
+                }
+              },
+              "queryRef": "Devices.LastUserEmail",
+              "nativeQueryRef": "LastUserEmail"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "LastUserStudentId"
+                }
+              },
+              "queryRef": "Devices.LastUserStudentId",
+              "nativeQueryRef": "LastUserStudentId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtLastSeenLocal"
+                }
+              },
+              "queryRef": "Devices.ExtLastSeenLocal",
+              "nativeQueryRef": "ExtLastSeenLocal"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtLastInternalIp"
+                }
+              },
+              "queryRef": "Devices.ExtLastInternalIp",
+              "nativeQueryRef": "ExtLastInternalIp"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtLastPublicIp"
+                }
+              },
+              "queryRef": "Devices.ExtLastPublicIp",
+              "nativeQueryRef": "ExtLastPublicIp"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtVersion"
+                }
+              },
+              "queryRef": "Devices.ExtVersion",
+              "nativeQueryRef": "ExtVersion"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtensionReportingStatus"
+                }
+              },
+              "queryRef": "Devices.ExtensionReportingStatus",
+              "nativeQueryRef": "ExtensionReportingStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "GoogleLastSyncLocal"
+                }
+              },
+              "queryRef": "Devices.GoogleLastSyncLocal",
+              "nativeQueryRef": "GoogleLastSyncLocal"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Device'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

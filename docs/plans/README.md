@@ -21,7 +21,8 @@ These are in the current code/docs and are called out where they matter in each 
    [scale-and-webstore.md](scale-and-webstore.md#1-sizing-at-50k-devices).
 3. **One HMAC secret for the whole fleet, delivered through extension policy.** Anyone who can read the policy
    on a device (for example on `chrome://policy`) can sign events as any device.
-4. **`docs/powerbi-reporting.md` lists views that do not exist** (`vw_CurrentActiveSessions`,
+4. ~~**`docs/powerbi-reporting.md` lists views that do not exist**~~ — fixed; it now points to `reporting/powerbi/`.
+   Was: (`vw_CurrentActiveSessions`,
    `vw_DeviceLoginHistory`, …). The real views are in `002_views.sql`; the reporting plan uses those.
 5. **No retry for Sentinel.** If Logs Ingestion fails, the batch is still accepted (SQL succeeded), so those
    events never reach Sentinel unless replayed from Blob.

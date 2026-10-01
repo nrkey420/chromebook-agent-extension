@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "69f8b914c2c5a2d58643",
+  "position": {
+    "x": 16,
+    "y": 16,
+    "z": 1000,
+    "width": 300,
+    "height": 56,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "DeviceOrgUnit"
+                }
+              },
+              "queryRef": "Devices.DeviceOrgUnit",
+              "nativeQueryRef": "DeviceOrgUnit"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "data": [
+        {
+          "properties": {
+            "mode": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Dropdown'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

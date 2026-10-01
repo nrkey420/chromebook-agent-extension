@@ -1,0 +1,18 @@
+/// Azure SQL server (deployment output sqlServerFqdn).
+expression SqlServer = "your-sql-server.database.windows.net" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 04812bbc-c22a-3c15-5a97-5933d792b7e2
+
+	annotation PBI_ResultType = Text
+
+/// Azure SQL database (deployment output sqlDatabaseName).
+expression SqlDatabase = "your-database" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 2c0da926-d907-fa52-0eae-e7d5990a87f5
+
+	annotation PBI_ResultType = Text
+
+/// Days of login history to load.
+expression LoginHistoryDays = 90 meta [IsParameterQuery=true, Type="Number", IsParameterQueryRequired=true]
+	lineageTag: 3ebe3824-63c5-fbc3-f1a7-d39fb491a264
+
+	annotation PBI_ResultType = Number
+

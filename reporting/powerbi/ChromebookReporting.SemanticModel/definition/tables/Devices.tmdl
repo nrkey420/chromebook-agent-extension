@@ -1,0 +1,195 @@
+/// One row per ChromeOS device: Google inventory plus the extension's last check-in.
+table Devices
+	lineageTag: 456d930a-e1db-c7e1-daf1-79ea413768f3
+
+	/// Devices in the inventory (Google inventory plus devices only the extension has seen).
+	measure Devices = COUNTROWS ( Devices )
+		formatString: #,0
+		displayFolder: Fleet
+		lineageTag: e2b245c4-7e25-f84e-404a-15648b85c2ac
+
+	/// Devices the extension heard from in the last 24 hours.
+	measure 'Reporting (24h)' = CALCULATE ( COUNTROWS ( Devices ), Devices[ExtLastSeenUtc] >= UTCNOW () - 1 )
+		formatString: #,0
+		displayFolder: Fleet
+		lineageTag: ef7dae84-83f3-9fd4-8167-60246f09e356
+
+	measure 'Reporting (7d)' = CALCULATE ( COUNTROWS ( Devices ), Devices[ExtLastSeenUtc] >= UTCNOW () - 7 )
+		formatString: #,0
+		displayFolder: Fleet
+		lineageTag: 416bc9b1-0f2c-6b45-7a34-917d52409465
+
+	measure 'Never reported' = CALCULATE ( COUNTROWS ( Devices ), Devices[ExtensionReportingStatus] = "NEVER_REPORTED" )
+		formatString: #,0
+		displayFolder: Fleet
+		lineageTag: 8f4e0919-1e62-af83-55cd-ce98e5b98120
+
+	/// Google saw the device more than a day after the extension last reported.
+	measure 'Extension silent' = CALCULATE ( COUNTROWS ( Devices ), Devices[ExtensionReportingStatus] = "EXTENSION_SILENT" )
+		formatString: #,0
+		displayFolder: Fleet
+		lineageTag: 2468600f-817c-f159-3af5-3020c73e2720
+
+	/// Devices that checked in with Google in the last 24 hours.
+	measure 'Google active (24h)' = CALCULATE ( COUNTROWS ( Devices ), Devices[GoogleLastSyncUtc] >= UTCNOW () - 1 )
+		formatString: #,0
+		displayFolder: Fleet
+		lineageTag: e982d34f-d3be-8e79-1b6c-4a7b78f2b366
+
+	/// Of the devices Google saw in the last 24 hours, the share the extension also reported from.
+	measure 'Coverage %' =
+			DIVIDE (
+			    CALCULATE (
+			        COUNTROWS ( Devices ),
+			        Devices[GoogleLastSyncUtc] >= UTCNOW () - 1,
+			        Devices[ExtLastSeenUtc] >= UTCNOW () - 1
+			    ),
+			    [Google active (24h)]
+			)
+		formatString: 0.0%
+		displayFolder: Fleet
+		lineageTag: 47785ce1-55d3-7444-acb2-312e4e89e6f0
+
+	column DirectoryDeviceId
+		dataType: string
+		isKey
+		lineageTag: 654dedd0-0308-603f-1771-ad252716840f
+		summarizeBy: none
+		sourceColumn: DirectoryDeviceId
+
+	column SerialNumber
+		dataType: string
+		lineageTag: 4c59da36-6875-0e4b-0ae9-3b6c413c6b7a
+		summarizeBy: none
+		sourceColumn: SerialNumber
+
+	column AssetId
+		dataType: string
+		lineageTag: 66df42c4-2359-9b9b-563c-e3c32ab3d453
+		summarizeBy: none
+		sourceColumn: AssetId
+
+	column AnnotatedLocation
+		dataType: string
+		lineageTag: a7b6080d-3a95-7aa8-9df0-0d20473e3c7a
+		summarizeBy: none
+		sourceColumn: AnnotatedLocation
+
+	column AnnotatedUser
+		dataType: string
+		lineageTag: 9c36f008-6cc9-a55c-d806-ef3b5a1405f3
+		summarizeBy: none
+		sourceColumn: AnnotatedUser
+
+	column DeviceOrgUnit
+		dataType: string
+		lineageTag: e8d1d043-c4fd-bf7c-fee8-40b9feeb9267
+		summarizeBy: none
+		sourceColumn: DeviceOrgUnit
+
+	column Model
+		dataType: string
+		lineageTag: e7087ff0-36ec-447e-1797-920b8e170c00
+		summarizeBy: none
+		sourceColumn: Model
+
+	column OsVersion
+		dataType: string
+		lineageTag: b4c52256-05fe-1628-e6e5-f560f39ad260
+		summarizeBy: none
+		sourceColumn: OsVersion
+
+	column AutoUpdateThrough
+		dataType: string
+		lineageTag: 3f15a07c-6108-65b0-d7fc-89b222a943c7
+		summarizeBy: none
+		sourceColumn: AutoUpdateThrough
+
+	column GoogleStatus
+		dataType: string
+		lineageTag: 1c7e1212-9887-bd56-6081-2d0c62940b6b
+		summarizeBy: none
+		sourceColumn: GoogleStatus
+
+	column MacAddress
+		dataType: string
+		lineageTag: 8bdf36d4-c959-91ee-e334-2df530c18ef0
+		summarizeBy: none
+		sourceColumn: MacAddress
+
+	column LastUserEmail
+		dataType: string
+		lineageTag: f7602587-e8c0-d8e7-36f9-49707c66436a
+		summarizeBy: none
+		sourceColumn: LastUserEmail
+
+	column LastUserStudentId
+		dataType: string
+		lineageTag: 8fabfdad-b851-9d44-ceb9-6d8874dc1933
+		summarizeBy: none
+		sourceColumn: LastUserStudentId
+
+	column GoogleLastSyncUtc
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 2a457f7a-e2b6-6b29-8660-a83c792034f5
+		summarizeBy: none
+		sourceColumn: GoogleLastSyncUtc
+
+	column GoogleLastSyncLocal
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 9e4422e6-5a53-3821-ef71-5f279632ff9d
+		summarizeBy: none
+		sourceColumn: GoogleLastSyncLocal
+
+	column ExtLastSeenUtc
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: d973aff8-d035-67fc-a6df-81da14c11067
+		summarizeBy: none
+		sourceColumn: ExtLastSeenUtc
+
+	column ExtLastSeenLocal
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 4cd86d7c-7831-4a90-f1e0-2e75deabf260
+		summarizeBy: none
+		sourceColumn: ExtLastSeenLocal
+
+	column ExtLastInternalIp
+		dataType: string
+		lineageTag: 9386def9-fa9a-6f00-4df1-44dc259976af
+		summarizeBy: none
+		sourceColumn: ExtLastInternalIp
+
+	column ExtLastPublicIp
+		dataType: string
+		lineageTag: 401fcb41-851b-5733-1cb0-da7e266f6167
+		summarizeBy: none
+		sourceColumn: ExtLastPublicIp
+
+	column ExtVersion
+		dataType: string
+		lineageTag: ab3af14e-bef4-5705-9f5a-5448d2677229
+		summarizeBy: none
+		sourceColumn: ExtVersion
+
+	column ExtensionReportingStatus
+		dataType: string
+		lineageTag: a7f2e1ee-c888-37f9-ffe3-a4dd23dfa407
+		summarizeBy: none
+		sourceColumn: ExtensionReportingStatus
+
+	partition Devices = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database(SqlServer, SqlDatabase),
+				    View = Source{[Schema = "dbo", Item = "vw_Devices"]}[Data],
+				    Selected = Table.SelectColumns(View, {"DirectoryDeviceId", "SerialNumber", "AssetId", "AnnotatedLocation", "AnnotatedUser", "DeviceOrgUnit", "Model", "OsVersion", "AutoUpdateThrough", "GoogleStatus", "MacAddress", "LastUserEmail", "LastUserStudentId", "GoogleLastSyncUtc", "GoogleLastSyncLocal", "ExtLastSeenUtc", "ExtLastSeenLocal", "ExtLastInternalIp", "ExtLastPublicIp", "ExtVersion", "ExtensionReportingStatus"})
+				in
+				    Selected
+

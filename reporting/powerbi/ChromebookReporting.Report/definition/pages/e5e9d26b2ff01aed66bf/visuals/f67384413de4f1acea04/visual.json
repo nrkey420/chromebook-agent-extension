@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "f67384413de4f1acea04",
+  "position": {
+    "x": 436.0,
+    "y": 16,
+    "z": 2000,
+    "width": 408.0,
+    "height": 96,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "SyncState"
+                    }
+                  },
+                  "Property": "Hours since last sync"
+                }
+              },
+              "queryRef": "SyncState.Hours since last sync",
+              "nativeQueryRef": "Hours since last sync"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

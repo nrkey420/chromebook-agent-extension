@@ -16,6 +16,8 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <!-- Parses the Power BI semantic model (TMDL) in reporting/powerbi. -->
+    <PackageReference Include="Microsoft.AnalysisServices" Version="19.117.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -29,6 +29,8 @@ Without this job the dashboards below still work, but: device totals = devices t
 
 ## 2. Power BI report
 
+**Status: built** (`reporting/powerbi/`): Fleet overview, Logins, Device and User drill-throughs, Pipeline health. The web-activity page (page 5 below) waits for rollup tables.
+
 One `.pbix` with these pages. Every page has slicers for date range, school (device OU / annotated location) and
 user OU. Filter on the **UTC** columns (`EventTimeUtc`, `ObservedUtc`) in the model — the `…Local` columns are
 computed by a function per row and cannot use indexes.
@@ -198,7 +200,7 @@ Run each on the pilot with a timer; target < 15 minutes each:
 
 1. ~~Google sync job~~ — built; complete the Google setup in `docs/google-sync.md`.
 2. ~~`InvestigationAudit` table + `usp_WebActivity` + audit inserts in the existing procedures~~ — built.
-3. Power BI pages 3 and 1 (device drill-through and fleet overview), then 2, 4, 5, 6.
+3. ~~Power BI pages 1–4 and 6~~ — built (`reporting/powerbi/`); page 5 (web activity) after the rollup tables in step 5.
 4. Sentinel workbook and analytics rules.
 5. Rollup tables and switch fleet pages to them before passing 5k devices.
 6. ~~Roles~~ — built (`docs/sql-access.md`); RLS and Azure SQL auditing before any non-pilot user gets access.

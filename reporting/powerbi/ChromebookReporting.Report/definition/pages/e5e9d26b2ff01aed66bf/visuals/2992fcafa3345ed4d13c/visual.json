@@ -1,0 +1,133 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "2992fcafa3345ed4d13c",
+  "position": {
+    "x": 528,
+    "y": 336,
+    "z": 6000,
+    "width": 736,
+    "height": 368,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "ErrorTimeUtc"
+                }
+              },
+              "queryRef": "IngestionErrors.ErrorTimeUtc",
+              "nativeQueryRef": "ErrorTimeUtc"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "Layer"
+                }
+              },
+              "queryRef": "IngestionErrors.Layer",
+              "nativeQueryRef": "Layer"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "ErrorCode"
+                }
+              },
+              "queryRef": "IngestionErrors.ErrorCode",
+              "nativeQueryRef": "ErrorCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "ErrorMessage"
+                }
+              },
+              "queryRef": "IngestionErrors.ErrorMessage",
+              "nativeQueryRef": "ErrorMessage"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "IngestionErrors"
+                    }
+                  },
+                  "Property": "CorrelationId"
+                }
+              },
+              "queryRef": "IngestionErrors.CorrelationId",
+              "nativeQueryRef": "CorrelationId"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "IngestionErrors"
+                  }
+                },
+                "Property": "ErrorTimeUtc"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Recent collector errors (UTC)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

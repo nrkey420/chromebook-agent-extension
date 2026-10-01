@@ -1,0 +1,3 @@
+# Power BI Desktop local files: per-user settings and the cached data (contains real data).
+**/.pbi/localSettings.json
+**/.pbi/cache.abf

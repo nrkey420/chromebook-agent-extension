@@ -1,0 +1,71 @@
+/// Workspace users (no names): student ID, OU, last device seen by the extension.
+table Users
+	lineageTag: 7898feec-3fb2-e1dd-231b-6bd62936a2e5
+
+	column UserEmail
+		dataType: string
+		isKey
+		lineageTag: 38543e75-bdd6-b4b8-2f98-7e130c1dc21a
+		summarizeBy: none
+		sourceColumn: UserEmail
+
+	column StudentId
+		dataType: string
+		lineageTag: 19004165-ae1c-e64b-4799-3d9f5fcb1205
+		summarizeBy: none
+		sourceColumn: StudentId
+
+	column UserOrgUnit
+		dataType: string
+		lineageTag: 7e3041cf-b710-af8c-6c10-9ca13f291c3b
+		summarizeBy: none
+		sourceColumn: UserOrgUnit
+
+	column IsSuspended
+		dataType: boolean
+		lineageTag: 1d478118-0c53-4656-8d4c-c14bff281b3b
+		summarizeBy: none
+		sourceColumn: IsSuspended
+
+	column IsArchived
+		dataType: boolean
+		lineageTag: 02cf4feb-a2f5-a6bf-8227-8b363db52787
+		summarizeBy: none
+		sourceColumn: IsArchived
+
+	column GoogleLastLoginLocal
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 13d7e088-fdd4-56e3-b998-042839d1afce
+		summarizeBy: none
+		sourceColumn: GoogleLastLoginLocal
+
+	column LastDeviceSerial
+		dataType: string
+		lineageTag: f1d6a99b-a1e8-6610-8d79-e95291066d15
+		summarizeBy: none
+		sourceColumn: LastDeviceSerial
+
+	column LastDeviceAssetId
+		dataType: string
+		lineageTag: 42baa28e-82c0-9ce2-9684-0a041d6ea9e7
+		summarizeBy: none
+		sourceColumn: LastDeviceAssetId
+
+	column LastDeviceSeenLocal
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: d290052c-f303-8318-eb04-ae599d7c41a6
+		summarizeBy: none
+		sourceColumn: LastDeviceSeenLocal
+
+	partition Users = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database(SqlServer, SqlDatabase),
+				    View = Source{[Schema = "dbo", Item = "vw_Users"]}[Data],
+				    Selected = Table.SelectColumns(View, {"UserEmail", "StudentId", "UserOrgUnit", "IsSuspended", "IsArchived", "GoogleLastLoginLocal", "LastDeviceSerial", "LastDeviceAssetId", "LastDeviceSeenLocal"})
+				in
+				    Selected
+

@@ -1,0 +1,187 @@
+/// Every login/logout from the extension and Google (ChromeOS and account sign-ins), with the IPs in use.
+table Logins
+	lineageTag: ac06fa2c-5df1-4c01-bfa7-e255c4c69b5a
+
+	/// Device sign-ins reported by Google.
+	measure 'ChromeOS logins' = CALCULATE ( COUNTROWS ( Logins ), Logins[Source] = "GOOGLE_CHROMEOS", Logins[LoginEvent] = "LOGIN" )
+		formatString: #,0
+		displayFolder: Logins
+		lineageTag: da9ea2e4-ce62-8ee2-de31-58d72b6b587c
+
+	/// Sessions started, as reported by the extension.
+	measure 'Extension sessions' = CALCULATE ( COUNTROWS ( Logins ), Logins[Source] = "EXTENSION", Logins[LoginEvent] = "SESSION_START" )
+		formatString: #,0
+		displayFolder: Logins
+		lineageTag: ae1b1a43-4b74-a4a9-fc99-3e5836127517
+
+	/// Failed ChromeOS logins and failed Google account sign-ins.
+	measure 'Login failures' = CALCULATE ( COUNTROWS ( Logins ), Logins[LoginEvent] = "LOGIN_FAILURE" )
+		formatString: #,0
+		displayFolder: Logins
+		lineageTag: f2166f14-892b-64fd-2736-47f0ba817da1
+
+	/// Distinct users who signed in to a device (Google ChromeOS login or extension session).
+	measure 'Users signed in' = CALCULATE ( DISTINCTCOUNT ( Logins[UserEmail] ), Logins[LoginEvent] IN { "LOGIN", "SESSION_START" }, Logins[Source] <> "GOOGLE_ACCOUNT" )
+		formatString: #,0
+		displayFolder: Logins
+		lineageTag: 084462d4-65b5-3152-e68b-520939fdd5d0
+
+	/// Distinct devices someone signed in to.
+	measure 'Devices used' = CALCULATE ( DISTINCTCOUNT ( Logins[DirectoryDeviceId] ), Logins[LoginEvent] IN { "LOGIN", "SESSION_START" }, Logins[Source] <> "GOOGLE_ACCOUNT" )
+		formatString: #,0
+		displayFolder: Logins
+		lineageTag: 6e519756-26ca-c393-d362-e955382a2053
+
+	measure 'Last sign-in' = CALCULATE ( MAX ( Logins[EventTimeLocal] ), Logins[LoginEvent] IN { "LOGIN", "SESSION_START" }, Logins[Source] <> "GOOGLE_ACCOUNT" )
+		formatString: yyyy-mm-dd hh:nn
+		displayFolder: Logins
+		lineageTag: 84b4b513-fdea-ae87-9efe-8aee7a9e4ea2
+
+	column EventTimeUtc
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 1e72a9c8-0e59-ea2e-f26b-cef9cb861a9d
+		summarizeBy: none
+		sourceColumn: EventTimeUtc
+
+	column EventTimeLocal
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn
+		lineageTag: 9b226545-aa60-6bcf-d52a-96d314988d62
+		summarizeBy: none
+		sourceColumn: EventTimeLocal
+
+	column Source
+		dataType: string
+		lineageTag: c77c2e9d-9263-c5ba-0da4-bebece42ee6a
+		summarizeBy: none
+		sourceColumn: Source
+
+	column LoginEvent
+		dataType: string
+		lineageTag: 414630f6-211f-ad6c-1c63-0e18c2b384ca
+		summarizeBy: none
+		sourceColumn: LoginEvent
+
+	column UserEmail
+		dataType: string
+		lineageTag: de70e0e9-8f5c-3d29-2503-52c402ddedf6
+		summarizeBy: none
+		sourceColumn: UserEmail
+
+	column StudentId
+		dataType: string
+		lineageTag: 41453800-69bd-d1c5-da1d-d6bbafbe0b1d
+		summarizeBy: none
+		sourceColumn: StudentId
+
+	column UserOrgUnit
+		dataType: string
+		lineageTag: 8ef7fb59-99ac-5cfd-ea3b-5cf10f8daa0c
+		summarizeBy: none
+		sourceColumn: UserOrgUnit
+
+	column DirectoryDeviceId
+		dataType: string
+		lineageTag: 03afddbc-f5fd-e8d8-63fa-1e6d818c0b2a
+		summarizeBy: none
+		sourceColumn: DirectoryDeviceId
+
+	column SerialNumber
+		dataType: string
+		lineageTag: 7512e694-88a6-1f2d-5c31-14f3edba3a4f
+		summarizeBy: none
+		sourceColumn: SerialNumber
+
+	column AssetId
+		dataType: string
+		lineageTag: 4388f21e-7609-25f3-a050-72c09804906e
+		summarizeBy: none
+		sourceColumn: AssetId
+
+	column AnnotatedLocation
+		dataType: string
+		lineageTag: a318a67d-142a-faad-efcd-c88fd1d50af1
+		summarizeBy: none
+		sourceColumn: AnnotatedLocation
+
+	column DeviceOrgUnit
+		dataType: string
+		lineageTag: 69e7b5f6-f54d-f02d-8720-1ab363e03a66
+		summarizeBy: none
+		sourceColumn: DeviceOrgUnit
+
+	column InternalIp
+		dataType: string
+		lineageTag: efbb101b-f378-f480-b7e7-3c0604bc15a5
+		summarizeBy: none
+		sourceColumn: InternalIp
+
+	column PublicIp
+		dataType: string
+		lineageTag: be2e2ed8-d4e7-6919-79b7-1d4faf68c80a
+		summarizeBy: none
+		sourceColumn: PublicIp
+
+	column Detail
+		dataType: string
+		lineageTag: 78c3954f-7c93-30f4-743d-cea8234dd413
+		summarizeBy: none
+		sourceColumn: Detail
+
+	column SessionId
+		dataType: string
+		lineageTag: 7916d2ae-f03c-3702-b41e-6a8acbe78e15
+		summarizeBy: none
+		sourceColumn: SessionId
+
+	/// Local date of the event.
+	column EventDate
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: a41863c3-9f26-8f99-8ee7-8d9a4092a87d
+		summarizeBy: none
+		sourceColumn: EventDate
+
+	/// Local hour of the event (0-23).
+	column EventHour
+		dataType: int64
+		formatString: 0
+		lineageTag: b3037617-64d0-28fa-5a68-5b6c55b43582
+		summarizeBy: none
+		sourceColumn: EventHour
+
+	column Weekday
+		dataType: string
+		lineageTag: 8f479349-2fcf-1e0d-3b41-5f007a85bf84
+		summarizeBy: none
+		sourceColumn: Weekday
+		sortByColumn: WeekdayNumber
+
+	column WeekdayNumber
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e010b1bc-84e5-268c-088d-31fc9560aae6
+		summarizeBy: none
+		sourceColumn: WeekdayNumber
+
+	partition Logins = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database(SqlServer, SqlDatabase),
+				    View = Source{[Schema = "dbo", Item = "vw_LoginHistory"]}[Data],
+				    Selected = Table.SelectColumns(View, {"EventTimeUtc", "EventTimeLocal", "Source", "LoginEvent", "UserEmail", "StudentId", "UserOrgUnit", "DirectoryDeviceId", "SerialNumber", "AssetId", "AnnotatedLocation", "DeviceOrgUnit", "InternalIp", "PublicIp", "Detail", "SessionId"}),
+				    // Filter in SQL (query folding): only the last LoginHistoryDays days.
+				    Since = DateTimeZone.RemoveZone(DateTimeZone.UtcNow()) - #duration(LoginHistoryDays, 0, 0, 0),
+				    Recent = Table.SelectRows(Selected, each [EventTimeUtc] >= Since),
+				    Guids = Table.TransformColumnTypes(Recent, {{"SessionId", type text}}),
+				    WithDate = Table.AddColumn(Guids, "EventDate", each Date.From([EventTimeLocal]), type date),
+				    WithHour = Table.AddColumn(WithDate, "EventHour", each Time.Hour([EventTimeLocal]), Int64.Type),
+				    WithWeekday = Table.AddColumn(WithHour, "Weekday", each Date.DayOfWeekName([EventTimeLocal], "en-US"), type text),
+				    WithWeekdayNumber = Table.AddColumn(WithWeekday, "WeekdayNumber", each Date.DayOfWeek([EventTimeLocal], Day.Monday) + 1, Int64.Type)
+				in
+				    WithWeekdayNumber
+

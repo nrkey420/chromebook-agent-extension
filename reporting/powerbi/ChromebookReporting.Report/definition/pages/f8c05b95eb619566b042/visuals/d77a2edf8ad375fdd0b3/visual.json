@@ -1,0 +1,119 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "d77a2edf8ad375fdd0b3",
+  "position": {
+    "x": 436.0,
+    "y": 440,
+    "z": 12000,
+    "width": 408.0,
+    "height": 264,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "UserEmail"
+                }
+              },
+              "queryRef": "Users.UserEmail",
+              "nativeQueryRef": "UserEmail"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Users"
+                    }
+                  },
+                  "Property": "StudentId"
+                }
+              },
+              "queryRef": "Users.StudentId",
+              "nativeQueryRef": "StudentId"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Devices used"
+                }
+              },
+              "queryRef": "Logins.Devices used",
+              "nativeQueryRef": "Devices used"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Last sign-in"
+                }
+              },
+              "queryRef": "Logins.Last sign-in",
+              "nativeQueryRef": "Last sign-in"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Logins"
+                  }
+                },
+                "Property": "Devices used"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Users by number of devices'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "b11824ff89640177c5a1",
+  "position": {
+    "x": 644,
+    "y": 192,
+    "z": 10000,
+    "width": 620,
+    "height": 236,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "ExtVersion"
+                }
+              },
+              "queryRef": "Devices.ExtVersion",
+              "nativeQueryRef": "ExtVersion"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Devices"
+                    }
+                  },
+                  "Property": "Devices"
+                }
+              },
+              "queryRef": "Devices.Devices",
+              "nativeQueryRef": "Devices"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Extension versions'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
