@@ -25,3 +25,4 @@ Azure CLI, .NET 8 SDK, go-sqlcmd (Azure SQL uses Microsoft Entra-only auth), Chr
 - `collector/` Azure Function collector + SQL scripts + tests.
 - `infra/` Bicep + deployment scripts.
 - `docs/` architecture, data model, privacy, operations, Sentinel, Power BI.
+- `docs/plans/` test plan, IR reporting and dashboards, scaling to 50k devices and the Chrome Web Store move.
