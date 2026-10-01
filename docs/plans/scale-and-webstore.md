@@ -208,7 +208,7 @@ both force-installed on the same OU — every event would be recorded twice.
 
 1. ~~Reporting prerequisites~~ — Google sync, `usp_WebActivity` and `InvestigationAudit` are built.
 2. Extension 0.4: jitter/backoff, per-event rejection, session-end fix, chunked queue, `LOCK`/`UNLOCK`, gzip.
-3. Load simulator + test environment; run L1–L2 against the current design to get a baseline.
+3. ~~Load simulator~~ — built (`tools/load-simulator/`); next: a test environment and L1–L2 against the current design for a baseline.
 4. Event Hubs pipeline, bulk SQL writer, heartbeat change, Sentinel writer with retry.
 5. Provisioned SQL + partitioning + rollups; Power BI on rollups.
 6. Front Door + custom domain + private endpoints; narrow `host_permissions`.

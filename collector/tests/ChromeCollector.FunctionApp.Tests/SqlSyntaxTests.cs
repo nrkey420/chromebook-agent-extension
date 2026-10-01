@@ -52,6 +52,15 @@ public class SqlSyntaxTests
     }
 
     [Fact]
+    public void DeleteLoadTestDataScript_Parses()
+    {
+        var repoRoot = Path.GetFullPath(Path.Combine(SqlDirectory, "..", "..", "..", ".."));
+        var sql = File.ReadAllText(Path.Combine(repoRoot, "infra", "scripts", "sql", "delete-load-test-data.sql"));
+        sql.Should().Contain("N'loadtest-%'");
+        AssertParses(sql);
+    }
+
+    [Fact]
     public void GrantRolesScript_Parses()
     {
         var repoRoot = Path.GetFullPath(Path.Combine(SqlDirectory, "..", "..", "..", ".."));

@@ -36,5 +36,7 @@ jobs:
           node-version: 22
       - name: Test extension
         run: node --test extension/tests/*.test.mjs
+      - name: Test load simulator
+        run: node --test tools/load-simulator/tests/*.test.mjs
       - name: Package extension
         run: bash extension/tools/pack.sh

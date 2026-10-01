@@ -53,7 +53,8 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 # Function local config and packaging
-collector/src/ChromebookCollector/local.settings.json
+**/local.settings.json
+collector/src/ChromeCollector.FunctionApp/publish/
 collector.zip
 
 # Extension packaging output

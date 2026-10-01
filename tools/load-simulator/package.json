@@ -1,0 +1,12 @@
+{
+  "name": "chromebook-load-simulator",
+  "private": true,
+  "type": "module",
+  "description": "Simulates many Chromebooks running the extension against a collector (test environments only). No dependencies.",
+  "engines": { "node": ">=20" },
+  "bin": { "chromebook-load-simulator": "simulator.mjs" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "dry-run": "node simulator.mjs --target mock --profile baseline --devices 500 --duration 60"
+  }
+}
