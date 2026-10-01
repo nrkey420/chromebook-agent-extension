@@ -86,6 +86,10 @@ jobs:
           SQL_ENTRA_ADMIN_OBJECT_ID: ${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
           SQL_ENTRA_ADMIN_NAME: ${{ secrets.SQL_ENTRA_ADMIN_NAME }}
           SQL_ENTRA_ADMIN_TYPE: ${{ secrets.SQL_ENTRA_ADMIN_TYPE }}
+          # Google sync (optional; docs/google-sync.md). Repository variables, not secrets.
+          GOOGLE_ADMIN_EMAIL: ${{ vars.GOOGLE_ADMIN_EMAIL }}
+          GOOGLE_DEVICE_ORG_UNIT: ${{ vars.GOOGLE_DEVICE_ORG_UNIT }}
+          GOOGLE_STUDENT_ID_SOURCE: ${{ vars.GOOGLE_STUDENT_ID_SOURCE }}
         run: |
           outputs=$(bash infra/scripts/deploy-bicep.sh "$AZURE_RESOURCE_GROUP" "$AZURE_LOCATION")
           for key in functionAppName functionHostname sqlServerName sqlServerFqdn sqlDatabaseName keyVaultName; do

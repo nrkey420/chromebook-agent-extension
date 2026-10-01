@@ -61,6 +61,45 @@ public class SqlSyntaxTests
         AssertParses(sql);
     }
 
+    [Theory]
+    [InlineData(nameof(GoogleSyncStore.CreateDeviceStagingSql))]
+    [InlineData(nameof(GoogleSyncStore.MergeDevicesSql))]
+    [InlineData(nameof(GoogleSyncStore.CreateUserStagingSql))]
+    [InlineData(nameof(GoogleSyncStore.MergeUsersSql))]
+    [InlineData(nameof(GoogleSyncStore.CreateAuditStagingSql))]
+    [InlineData(nameof(GoogleSyncStore.InsertAuditSql))]
+    [InlineData(nameof(GoogleSyncStore.GetWatermarkSql))]
+    [InlineData(nameof(GoogleSyncStore.RecordRunSql))]
+    public void GoogleSyncSql_Parses(string constantName)
+    {
+        var sql = (string)typeof(GoogleSyncStore).GetField(constantName)!.GetValue(null)!;
+        AssertParses(sql);
+    }
+
+    /// <summary>SqlBulkCopy maps by column name, so the staging tables and the DataTables must agree.</summary>
+    [Fact]
+    public void GoogleDeviceStaging_ColumnsMatchBulkCopyTables()
+    {
+        var device = new Models.GoogleDevice { DirectoryDeviceId = "d" };
+        var now = DateTime.UtcNow;
+        StagingColumns(GoogleSyncStore.CreateDeviceStagingSql, "#GoogleDevices")
+            .Should().Equal(GoogleSyncStore.DeviceTable([device], now).Columns.Cast<System.Data.DataColumn>().Select(c => c.ColumnName));
+        StagingColumns(GoogleSyncStore.CreateDeviceStagingSql, "#GoogleRecentUsers")
+            .Should().Equal(GoogleSyncStore.RecentUserTable([device], now).Columns.Cast<System.Data.DataColumn>().Select(c => c.ColumnName));
+        StagingColumns(GoogleSyncStore.CreateDeviceStagingSql, "#GoogleActiveTime")
+            .Should().Equal(GoogleSyncStore.ActiveTimeTable([device], now).Columns.Cast<System.Data.DataColumn>().Select(c => c.ColumnName));
+    }
+
+    private static List<string> StagingColumns(string createSql, string tableName)
+    {
+        var parser = new TSql160Parser(initialQuotedIdentifiers: true);
+        using var reader = new StringReader(createSql);
+        var script = (TSqlScript)parser.Parse(reader, out _);
+        return script.Batches.SelectMany(b => b.Statements).OfType<CreateTableStatement>()
+            .Single(s => s.SchemaObjectName.BaseIdentifier.Value == tableName)
+            .Definition.ColumnDefinitions.Select(c => c.ColumnIdentifier.Value).ToList();
+    }
+
     private static void AssertParses(string sql)
     {
         var parser = new TSql160Parser(initialQuotedIdentifiers: true);

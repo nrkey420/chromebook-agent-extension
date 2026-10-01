@@ -13,11 +13,9 @@ with incident-response reporting and a Chrome Web Store–hosted extension.
 
 These are in the current code/docs and are called out where they matter in each plan:
 
-1. **The Google sync job does not exist.** `001_tables.sql` defines `GoogleAuditEvents`, `GoogleUsers`,
-   `GoogleDeviceRecentUsers`, `GoogleDeviceActiveTime`, `SyncState` and the Google columns of `Devices`, and the
-   views join them, but nothing in the repo writes them. Until it is built: the "devices in inventory" count is
-   only devices the extension has seen, `ExtensionReportingStatus` can never say `EXTENSION_SILENT`, Google login
-   events and login failures are missing from `vw_LoginHistory`, and `StudentId` is always empty.
+1. ~~**The Google sync job does not exist.**~~ **Built** — see `docs/google-sync.md`. It fills `GoogleAuditEvents`,
+   `GoogleUsers`, `GoogleDeviceRecentUsers`, `GoogleDeviceActiveTime`, `SyncState` and the Google columns of `Devices`.
+   It needs the one-time Google service account / delegation setup before it does anything.
 2. **SQL is sized for the PoC.** 2 vCores / 32 GB, one SQL round trip (with `MERGE ... HOLDLOCK`) per event, and
    every event — including 5-minute heartbeats — stored in `ActivityEvents`. See the sizing in
    [scale-and-webstore.md](scale-and-webstore.md#1-sizing-at-50k-devices).

@@ -9,7 +9,9 @@ Two audiences, two tools, one data contract:
 
 The SQL views stay the reporting contract (per `IMPLEMENT.md`). Dashboards never query base tables directly.
 
-## 1. Prerequisite: build the Google sync
+## 1. Prerequisite: the Google sync
+
+**Status: built** (`docs/google-sync.md`); it only needs the one-time Google setup. Design notes kept below.
 
 Several numbers the IR team will ask for come from Google, not the extension. Build a timer-triggered Function
 (same app, managed identity, a Google service account with domain-wide delegation, read-only scopes) that fills the
@@ -241,7 +243,7 @@ Run each on the pilot with a timer; target < 15 minutes each:
 
 ## 7. Build order
 
-1. Google sync job (unblocks inventory, Google logins, student IDs).
+1. ~~Google sync job~~ — built; complete the Google setup in `docs/google-sync.md`.
 2. `InvestigationAudit` table + `usp_WebActivity` + audit inserts in the existing procedures.
 3. Power BI pages 3 and 1 (device drill-through and fleet overview), then 2, 4, 5, 6.
 4. Sentinel workbook and analytics rules.

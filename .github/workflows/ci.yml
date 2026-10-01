@@ -8,6 +8,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # SQL Server for the integration tests that run the real schema scripts (they skip without it).
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: Ci_Only_Passw0rd!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Ci_Only_Passw0rd!' -Q 'SELECT 1' -b"
+          --health-interval 10s --health-timeout 5s --health-retries 12 --health-start-period 20s
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -16,6 +28,8 @@ jobs:
       - name: Build collector
         run: dotnet build collector/ChromeCollector.sln
       - name: Test collector
+        env:
+          SQL_TEST_CONNECTION_STRING: Server=localhost,1433;User ID=sa;Password=Ci_Only_Passw0rd!;TrustServerCertificate=True;Encrypt=False
         run: dotnet test collector/ChromeCollector.sln --no-build
       - uses: actions/setup-node@v4
         with:

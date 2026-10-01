@@ -8,6 +8,10 @@
 #   SQL_ENTRA_ADMIN_NAME        its display name / UPN
 #   SQL_ENTRA_ADMIN_TYPE        User | Group | Application (default User)
 #   KEYVAULT_ADMIN_OBJECT_ID    user/group granted Key Vault Secrets Officer
+# Optional Google sync settings (docs/google-sync.md); the sync stays off without GOOGLE_ADMIN_EMAIL:
+#   GOOGLE_ADMIN_EMAIL          Workspace admin the sync service account impersonates
+#   GOOGLE_DEVICE_ORG_UNIT      limit the device sync to one OU (e.g. the pilot OU)
+#   GOOGLE_STUDENT_ID_SOURCE    none | emailLocalPart | externalId[:type] | customSchema:Schema.Field
 set -euo pipefail
 RG=${1:-rg-chromebook-poc}
 LOC=${2:-eastus}
@@ -27,7 +31,10 @@ if [[ -z "$SQL_ADMIN_ID" || -z "$SQL_ADMIN_NAME" ]]; then
 fi
 
 EXTRA_PARAMS=()
-[[ -n "$KV_ADMIN" ]] && EXTRA_PARAMS=(keyVaultAdminObjectId="$KV_ADMIN")
+[[ -n "$KV_ADMIN" ]] && EXTRA_PARAMS+=(keyVaultAdminObjectId="$KV_ADMIN")
+# Always passed, so a redeploy keeps the Google settings in step with what the caller provides.
+EXTRA_PARAMS+=(googleAdminEmail="${GOOGLE_ADMIN_EMAIL:-}" googleDeviceOrgUnit="${GOOGLE_DEVICE_ORG_UNIT:-}")
+[[ -n "${GOOGLE_STUDENT_ID_SOURCE:-}" ]] && EXTRA_PARAMS+=(googleStudentIdSource="$GOOGLE_STUDENT_ID_SOURCE")
 az group create -n "$RG" -l "$LOC" >/dev/null
 az deployment group create -g "$RG" -f infra/bicep/main.bicep \
   -p @infra/bicep/main.parameters.json \

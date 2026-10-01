@@ -68,6 +68,17 @@ param sqlAutoPauseDelayMinutes int = 60
 @description('Azure SQL: maximum database size in GB.')
 param sqlMaxSizeGB int = 32
 
+// Google sync (docs/google-sync.md). The service account key is NOT a parameter: put it in Key Vault as the secret
+// GoogleServiceAccountKey (az keyvault secret set). Until that secret exists and an admin email is set, the sync is off.
+@description('Google Workspace admin the sync service account impersonates. Empty = Google sync off.')
+param googleAdminEmail string = ''
+
+@description('Optional: limit the Google device sync to this OU and its children (e.g. the pilot OU). Empty = whole domain.')
+param googleDeviceOrgUnit string = ''
+
+@description('Where the student ID comes from: none, emailLocalPart, externalId[:type], customSchema:Schema.Field.')
+param googleStudentIdSource string = 'externalId:organization'
+
 var suffix = toLower(uniqueString(resourceGroup().id, prefix))
 var storageName = take(toLower(replace('${prefix}${suffix}', '-', '')), 24)
 var functionName = '${prefix}-func-${environment}'
@@ -213,6 +224,9 @@ resource hmacKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: { value: hmacKey }
 }
 
+// Created by hand (it is a Google credential, not generated here): see docs/google-sync.md.
+var googleServiceAccountSecretName = 'GoogleServiceAccountKey'
+
 // Versionless secret URIs, so a new secret version is picked up without redeploying.
 func kvRef(secretUri string) string => '@Microsoft.KeyVault(SecretUri=${secretUri})'
 
@@ -251,6 +265,11 @@ resource func 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appi.properties.ConnectionString }
         { name: 'SQL_CONNECTION_STRING', value: sqlConnectionString }
         { name: 'HMAC_KEYS__KEY1', value: kvRef(hmacKeySecret.properties.secretUri) }
+        // Resolves once the secret is created; until then the sync sees the unresolved reference and stays off.
+        { name: 'GOOGLE_SERVICE_ACCOUNT_JSON', value: kvRef('${kv.properties.vaultUri}secrets/${googleServiceAccountSecretName}') }
+        { name: 'GOOGLE_ADMIN_EMAIL', value: googleAdminEmail }
+        { name: 'GOOGLE_DEVICE_ORG_UNIT', value: googleDeviceOrgUnit }
+        { name: 'GOOGLE_STUDENT_ID_SOURCE', value: googleStudentIdSource }
       ]
     }
   }
@@ -296,3 +315,4 @@ output sqlServerName string = sql.name
 output sqlServerFqdn string = sql.properties.fullyQualifiedDomainName
 output sqlDatabaseName string = db.name
 output keyVaultName string = kv.name
+output googleServiceAccountSecretName string = googleServiceAccountSecretName
