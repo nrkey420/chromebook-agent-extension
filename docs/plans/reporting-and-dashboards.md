@@ -116,62 +116,13 @@ over App Insights for latency and 4xx/5xx — alert on 5xx > 1 % for 5 min, Sent
 
 ## 3. Pulling web activity for an incident
 
-Add a procedure so analysts get a consistent, filtered, auditable export instead of free-form queries:
+**Status: built.** `dbo.usp_WebActivity` and the `dbo.InvestigationAudit` table are in the schema scripts, and the
+older procedures (`usp_DeviceTimeline`, `usp_UserTimeline`, `usp_WhoWasOnIp`, `usp_FindDevice`) now log every run
+too (with an optional `@CaseNumber`). Analyst runbook: `docs/investigations.md`.
 
-```sql
--- Web activity for one device and/or user in a time window. At least one of @Device / @User is required.
-CREATE OR ALTER PROCEDURE dbo.usp_WebActivity
-  @Device nvarchar(256) = NULL,   -- serial, asset ID or directory device ID
-  @User nvarchar(320) = NULL,     -- email or student ID
-  @From datetime2,
-  @To datetime2,
-  @Domain nvarchar(256) = NULL,   -- optional: one domain and its subdomains
-  @IncludeDownloads bit = 1,
-  @TimesAreUtc bit = 0,
-  @CaseNumber nvarchar(64)        -- required: recorded in the audit log
-AS
-BEGIN
-  SET NOCOUNT ON;
-  IF @Device IS NULL AND @User IS NULL THROW 50001, 'Specify @Device or @User.', 1;
-  IF NULLIF(LTRIM(@CaseNumber), '') IS NULL THROW 50002, 'A case number is required.', 1;
-
-  DECLARE @FromUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @From ELSE dbo.fn_ToUtc(@From) END;
-  DECLARE @ToUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @To ELSE dbo.fn_ToUtc(@To) END;
-  DECLARE @Email nvarchar(320) = CASE WHEN @User IS NULL THEN NULL ELSE COALESCE(
-    (SELECT TOP 1 UserEmail FROM dbo.GoogleUsers WHERE UserEmail = @User OR StudentId = @User), @User) END;
-
-  DECLARE @Ids TABLE (DirectoryDeviceId nvarchar(128) PRIMARY KEY);
-  IF @Device IS NOT NULL
-  BEGIN
-    INSERT @Ids SELECT DirectoryDeviceId FROM dbo.Devices
-    WHERE DirectoryDeviceId = @Device OR SerialNumber = @Device OR AssetId = @Device;
-    IF NOT EXISTS (SELECT 1 FROM @Ids) INSERT @Ids VALUES (@Device);
-  END;
-
-  INSERT dbo.InvestigationAudit (RunUtc, RunBy, CaseNumber, ProcedureName, Parameters)
-  VALUES (SYSUTCDATETIME(), SUSER_SNAME(), @CaseNumber, 'usp_WebActivity',
-          CONCAT('device=', @Device, ';user=', @User, ';from=', @FromUtc, ';to=', @ToUtc, ';domain=', @Domain));
-
-  SELECT a.EventTimeUtc, dbo.fn_ToLocal(a.EventTimeUtc) AS EventTimeLocal, a.EventType,
-         a.UserEmail, u.StudentId, d.SerialNumber, d.AssetId,
-         a.Domain, a.Url, a.Title, a.SearchEngine, a.SearchQuery,
-         a.DownloadFileName, a.DownloadMime, a.DownloadDanger, a.DownloadState,
-         a.InternalIp, a.PublicIp, a.SessionId, a.EventId
-  FROM dbo.ActivityEvents a
-  LEFT JOIN dbo.GoogleUsers u ON u.UserEmail = a.UserEmail
-  LEFT JOIN dbo.Devices d ON d.DirectoryDeviceId = a.DirectoryDeviceId
-  WHERE a.EventTimeUtc BETWEEN @FromUtc AND @ToUtc
-    AND (a.EventType = 'NAVIGATION' OR (@IncludeDownloads = 1 AND a.EventType = 'DOWNLOAD'))
-    AND (@Email IS NULL OR a.UserEmail = @Email)
-    AND (@Device IS NULL OR a.DirectoryDeviceId IN (SELECT DirectoryDeviceId FROM @Ids))
-    AND (@Domain IS NULL OR a.Domain = @Domain OR a.Domain LIKE '%.' + @Domain)
-  ORDER BY a.EventTimeUtc
-  OPTION (RECOMPILE);
-END;
-```
-
-(`InvestigationAudit` is a new table: `RunUtc`, `RunBy`, `CaseNumber`, `ProcedureName`, `Parameters`. Add the same
-audit insert to `usp_DeviceTimeline`, `usp_UserTimeline` and `usp_WhoWasOnIp`.)
+Differences from the first sketch in this plan: the window is `[@From, @To)` so whole days don't overlap; a
+`@MaxRows` cap (default 50,000) flags truncation on every row; a second result set summarises the same filter by
+domain; the audit row records the resolved user and the number of rows returned.
 
 For windows older than the SQL hot retention (section 4), run the same filter in Log Analytics or over the raw
 archive:
@@ -244,7 +195,7 @@ Run each on the pilot with a timer; target < 15 minutes each:
 ## 7. Build order
 
 1. ~~Google sync job~~ — built; complete the Google setup in `docs/google-sync.md`.
-2. `InvestigationAudit` table + `usp_WebActivity` + audit inserts in the existing procedures.
+2. ~~`InvestigationAudit` table + `usp_WebActivity` + audit inserts in the existing procedures~~ — built.
 3. Power BI pages 3 and 1 (device drill-through and fleet overview), then 2, 4, 5, 6.
 4. Sentinel workbook and analytics rules.
 5. Rollup tables and switch fleet pages to them before passing 5k devices.
