@@ -30,4 +30,5 @@ Azure CLI, .NET 8 SDK, go-sqlcmd (Azure SQL uses Microsoft Entra-only auth), Chr
 - `infra/` Bicep + deployment scripts.
 - `docs/` architecture, data model, privacy, operations, Sentinel, Power BI.
 - `reporting/powerbi/` Power BI project (semantic model + report pages).
+- `tools/load-simulator/` load simulator: thousands of virtual Chromebooks against a test collector.
 - `docs/plans/` test plan, IR reporting and dashboards, scaling to 50k devices and the Chrome Web Store move.

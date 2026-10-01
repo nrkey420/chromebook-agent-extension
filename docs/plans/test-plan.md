@@ -163,6 +163,8 @@ Run these as scheduled queries and track them as pilot KPIs:
 
 ## 6. Load and soak tests
 
+**Status: simulator built** (`tools/load-simulator/`, with commands for L1–L6 in its README). Not yet run against an Azure test environment.
+
 Real devices cannot produce 50,000-device traffic, so build a **device simulator**: a small Node or k6 script that
 creates N virtual devices (distinct `X-Device-Id`, serial, user), each following a realistic schedule — sign-in
 burst at the bell, heartbeat every 5 min, navigation at the rate measured in pilot (scenario A3), flush every
