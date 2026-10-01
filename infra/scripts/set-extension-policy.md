@@ -21,8 +21,9 @@ The simplest way to force-install on managed Chromebooks is a **private Chrome W
 2. Upload the zip and set **Visibility → Private** to your domain.
 3. After review, note the **extension ID** shown in the developer dashboard.
 
-(Self-hosting a `.crx` with an update manifest also works for ChromeOS but needs a signing key and a public
-URL for the update XML; the Web Store route avoids both.)
+**No developer account?** Self-host the signed `.crx` from a GitHub release and force-install it from a
+custom URL — free, no Web Store account. Full steps: `docs/self-hosted-extension.md`. The rest of this
+guide (policy JSON, OU settings, verification) applies to both routes.
 
 The manifest allows the extension to reach `https://*.azurewebsites.net/*`, which covers the Function App's
 default hostname. If the collector moves to a custom domain, package with
