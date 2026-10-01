@@ -172,6 +172,8 @@ N devices in an hour, extension silent on many devices at once (possible tamperi
 
 ## 5. Access, privacy and evidence handling
 
+**Status: roles built** (`docs/sql-access.md`): `ChromebookDeviceReaders`, `ChromebookInvestigators`, `ChromebookAuditReviewers`, with web content reachable only through the audited procedures. Per-school row-level security and Azure SQL auditing are still to do.
+
 Web activity of students is sensitive (FERPA and state student-privacy law). Before production:
 
 - **Roles** (Entra groups → SQL database roles → Power BI workspace roles):
@@ -199,5 +201,5 @@ Run each on the pilot with a timer; target < 15 minutes each:
 3. Power BI pages 3 and 1 (device drill-through and fleet overview), then 2, 4, 5, 6.
 4. Sentinel workbook and analytics rules.
 5. Rollup tables and switch fleet pages to them before passing 5k devices.
-6. Roles, RLS and auditing before any non-pilot user gets access.
+6. ~~Roles~~ — built (`docs/sql-access.md`); RLS and Azure SQL auditing before any non-pilot user gets access.
 7. Fix `docs/powerbi-reporting.md` to list the real views.

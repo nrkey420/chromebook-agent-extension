@@ -1,4 +1,5 @@
 using ChromeCollector.FunctionApp.Models;
+using Google;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,7 @@ public interface IGoogleSyncService
     Task<GoogleSyncResult> SyncAuditAsync(string application, CancellationToken cancellationToken);
 }
 
-public sealed record GoogleSyncResult(string SyncName, string Status, int Items, DateTime? WatermarkUtc = null);
+public sealed record GoogleSyncResult(string SyncName, string Status, int Items, DateTime? WatermarkUtc = null, string? Message = null);
 
 /// <summary>
 /// Pulls Google device inventory, users and sign-in audit events into SQL. Every run is recorded in dbo.SyncState
@@ -43,7 +44,7 @@ public sealed class GoogleSyncService(
                 count += await store.UpsertDevicesAsync(rows, runUtc, ct);
                 logger.LogInformation("Google device sync: {count} devices so far", count);
             }
-            return (count, (DateTime?)runUtc);
+            return (count, (DateTime?)runUtc, (string?)null);
         }, cancellationToken);
 
     public Task<GoogleSyncResult> SyncUsersAsync(CancellationToken cancellationToken) =>
@@ -56,7 +57,7 @@ public sealed class GoogleSyncService(
                 count += await store.UpsertUsersAsync(rows, runUtc, ct);
                 logger.LogInformation("Google user sync: {count} users so far", count);
             }
-            return (count, (DateTime?)runUtc);
+            return (count, (DateTime?)runUtc, (string?)null);
         }, cancellationToken);
 
     public Task<GoogleSyncResult> SyncAuditAsync(string application, CancellationToken cancellationToken) =>
@@ -66,21 +67,38 @@ public sealed class GoogleSyncService(
             var eventNames = application == GoogleSyncOptions.AuditChrome ? options.ChromeEventNames : options.LoginEventNames;
 
             var inserted = 0;
+            var unknown = new List<string>();
             // No names = every event of the application, in one listing.
             foreach (var eventName in eventNames.Count == 0 ? [null] : eventNames.Cast<string?>())
             {
-                await foreach (var page in source.ListActivitiesAsync(application, eventName, startUtc, endUtc, ct))
+                try
                 {
-                    var rows = page.SelectMany(GoogleMapper.MapActivity)
-                        // A name-filtered request returns the whole activity; keep only the requested events.
-                        .Where(e => eventName is null || string.Equals(e.EventName, eventName, StringComparison.Ordinal))
-                        .ToList();
-                    inserted += await store.InsertAuditEventsAsync(rows, ct);
+                    await foreach (var page in source.ListActivitiesAsync(application, eventName, startUtc, endUtc, ct))
+                    {
+                        var rows = page.SelectMany(GoogleMapper.MapActivity)
+                            // A name-filtered request returns the whole activity; keep only the requested events.
+                            .Where(e => eventName is null || string.Equals(e.EventName, eventName, StringComparison.Ordinal))
+                            .ToList();
+                        inserted += await store.InsertAuditEventsAsync(rows, ct);
+                    }
+                }
+                catch (GoogleApiException ex) when (eventName is not null && IsUnknownEventName(ex))
+                {
+                    // One bad name (renamed by Google, or a typo in GOOGLE_*_EVENT_NAMES) must not stop the others.
+                    logger.LogWarning("Google {app} audit sync: Google does not accept event name {eventName}; skipped. {message}", application, eventName, ex.Message);
+                    unknown.Add(eventName);
                 }
             }
             logger.LogInformation("Google {app} audit sync {from:o}..{to:o}: {count} new events", application, startUtc, endUtc, inserted);
-            return (inserted, (DateTime?)endUtc);
+            var message = unknown.Count == 0 ? null
+                : $"Skipped event names Google does not accept: {string.Join(", ", unknown)}. Remove them from the GOOGLE_*_EVENT_NAMES setting.";
+            return (inserted, (DateTime?)endUtc, message);
         }, cancellationToken);
+
+    /// <summary>The Reports API answers 400 "Event X not found in manifest" for an event name it does not know.</summary>
+    public static bool IsUnknownEventName(GoogleApiException ex) =>
+        ex.HttpStatusCode == System.Net.HttpStatusCode.BadRequest
+        && ex.Message.Contains("not found in manifest", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Start = previous watermark minus the overlap (or the initial backfill), capped to what Google retains.</summary>
     public static (DateTime StartUtc, DateTime EndUtc) AuditWindow(DateTime? watermarkUtc, DateTime runUtc, GoogleSyncOptions options)
@@ -96,7 +114,7 @@ public sealed class GoogleSyncService(
 
     private async Task<GoogleSyncResult> RunAsync(
         string syncName,
-        Func<GoogleSyncOptions, DateTime, CancellationToken, Task<(int Items, DateTime? Watermark)>> work,
+        Func<GoogleSyncOptions, DateTime, CancellationToken, Task<(int Items, DateTime? Watermark, string? Message)>> work,
         CancellationToken cancellationToken)
     {
         var options = GoogleSyncOptions.FromConfiguration(configuration);
@@ -109,9 +127,9 @@ public sealed class GoogleSyncService(
         var runUtc = timeProvider.GetUtcNow().UtcDateTime;
         try
         {
-            var (items, watermark) = await work(options, runUtc, cancellationToken);
-            await store.RecordRunAsync(syncName, runUtc, "SUCCESS", null, items, watermark, cancellationToken);
-            return new GoogleSyncResult(syncName, "SUCCESS", items, watermark);
+            var (items, watermark, message) = await work(options, runUtc, cancellationToken);
+            await store.RecordRunAsync(syncName, runUtc, "SUCCESS", message, items, watermark, cancellationToken);
+            return new GoogleSyncResult(syncName, "SUCCESS", items, watermark, message);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

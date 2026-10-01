@@ -35,7 +35,7 @@ public sealed class SqlTestDatabase : IAsyncLifetime
         ConnectionString = new SqlConnectionStringBuilder(_server) { InitialCatalog = _name }.ConnectionString;
 
         var sqlDir = Path.Combine(RepoPaths.CollectorRoot, "src", "ChromeCollector.FunctionApp", "Sql");
-        foreach (var file in new[] { "001_tables.sql", "002_views.sql", "003_procedures.sql" })
+        foreach (var file in new[] { "001_tables.sql", "002_views.sql", "003_procedures.sql", "004_security.sql" })
         foreach (var batch in SplitBatches(await File.ReadAllTextAsync(Path.Combine(sqlDir, file))))
             await ExecAsync(ConnectionString, batch);
     }

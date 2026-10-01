@@ -1,5 +1,5 @@
 -- Chromebook investigation database: tables and indexes.
--- Idempotent: safe to re-run. Run in order: 001, 002, 003.
+-- Idempotent: safe to re-run. Run in order: 001, 002, 003, 004.
 --
 -- Data sources:
 --   EXTENSION        events sent by the force-installed Chrome extension (via the collector)

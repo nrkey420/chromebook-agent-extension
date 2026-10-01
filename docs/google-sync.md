@@ -8,7 +8,7 @@ extension's events.
 |---|---|---|---|
 | `GoogleDeviceSync` | every 6 h at :05 | Directory `chromeosdevices.list` (FULL, field-masked, 200/page) | `Devices` (Google columns only), `GoogleDeviceRecentUsers`, `GoogleDeviceActiveTime` (last 30 days), `IpObservations` (`Source = GOOGLE_SYNC`, one per Google check-in) |
 | `GoogleUserSync` | daily 02:20 | Directory `users.list` (500/page) | `GoogleUsers` (incl. `StudentId`; no names) |
-| `GoogleChromeAuditSync` | every 15 min | Reports `activities.list` app `chrome`: `CHROME_OS_LOGIN_EVENT`, `CHROME_OS_LOGOUT_EVENT`, `CHROME_OS_LOGIN_FAILURE_EVENT`, `CHROME_OS_LOGIN_LOGOUT_EVENT` | `GoogleAuditEvents` |
+| `GoogleChromeAuditSync` | every 15 min | Reports `activities.list` app `chrome`: `CHROME_OS_LOGIN_EVENT`, `CHROME_OS_LOGOUT_EVENT`, `CHROME_OS_LOGIN_FAILURE_EVENT` | `GoogleAuditEvents` |
 | `GoogleLoginAuditSync` | every 15 min (:07, :22, …) | Reports `activities.list` app `login` (all events; source IP) | `GoogleAuditEvents` |
 
 Every run writes a row in `dbo.SyncState` (`LastRunUtc`, `LastStatus` = `SUCCESS`/`FAILED`, `ItemsProcessed`,
@@ -130,7 +130,7 @@ SELECT COUNT(*) AS Users, COUNT(StudentId) AS WithStudentId FROM dbo.GoogleUsers
 | `GOOGLE_ACTIVE_TIME_DAYS` | `30` | Days of per-device active time kept on each sync. |
 | `GOOGLE_AUDIT_INITIAL_DAYS` | `7` | First audit run back-fill (max 180, Google's retention). |
 | `GOOGLE_AUDIT_OVERLAP_MINUTES` | `180` | Re-read window before the watermark. |
-| `GOOGLE_CHROME_EVENT_NAMES` | the four ChromeOS login/logout events | Comma-separated Chrome audit event names. |
+| `GOOGLE_CHROME_EVENT_NAMES` | the three ChromeOS login/logout/failure events | Comma-separated Chrome audit event names. A name Google rejects is skipped and noted in `SyncState.LastMessage`; the others still sync. |
 | `GOOGLE_LOGIN_EVENT_NAMES` | (all) | Comma-separated `login` audit event names. |
 
 Only the first four are wired through Bicep; set the others in `main.bicep` if you need them in Azure.
@@ -142,6 +142,7 @@ Disable a single job with the app setting `AzureWebJobs.<FunctionName>.Disabled 
 |---|---|
 | Logs say "skipped: Google sync not configured" | `GOOGLE_ADMIN_EMAIL` empty, or the Key Vault reference has not resolved (secret missing, wrong name, or app not restarted). Portal → Function App → Environment variables shows the reference status. |
 | `SyncState.LastMessage` contains `unauthorized_client` | Domain-wide delegation missing, wrong client ID (use the Unique ID, not the email), or scopes not exactly as listed. Changes can take minutes to apply. |
+| `Event … not found in manifest` (older version) or `Skipped event names Google does not accept` | An event name Google's API does not accept as a filter (Google's docs list `CHROME_OS_LOGIN_LOGOUT_EVENT`, but the API rejects it). Remove it from `GOOGLE_CHROME_EVENT_NAMES` / `GOOGLE_LOGIN_EVENT_NAMES`. |
 | `invalid_grant` | `GOOGLE_ADMIN_EMAIL` is not a real user in the domain, or the service account key was deleted/disabled in Google Cloud. |
 | `Not Authorized to access this resource/api` (403) | The impersonated admin lacks the read privilege for devices, users or reports. |
 | `StudentId` empty | Check where your SIS sync writes the ID and set `GOOGLE_STUDENT_ID_SOURCE` accordingly; re-run `GoogleUserSync`. |
