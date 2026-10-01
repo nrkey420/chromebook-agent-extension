@@ -13,6 +13,8 @@
 #                             app's database user resolves its name in Entra ID, which a service principal
 #                             can only do if the SQL server has Directory Readers. Run the grant once as a person.
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)" # repo root, so the script works from any folder
 SQLCMD=${SQLCMD:-sqlcmd}
 if ! command -v "$SQLCMD" >/dev/null 2>&1; then
   echo "sqlcmd not found. Install go-sqlcmd with: bash infra/scripts/install-sqlcmd.sh (see docs/sql-access.md)." >&2
@@ -20,7 +22,7 @@ if ! command -v "$SQLCMD" >/dev/null 2>&1; then
 fi
 : "${SQL_SERVER:?set SQL_SERVER}"; : "${SQL_DATABASE:?set SQL_DATABASE}"; : "${FUNCTION_APP_NAME:?set FUNCTION_APP_NAME}"
 AUTH=(--authentication-method ActiveDirectoryDefault)
-for f in collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql collector/src/ChromeCollector.FunctionApp/Sql/004_security.sql; do
+for f in "$ROOT"/collector/src/ChromeCollector.FunctionApp/Sql/00{1_tables,2_views,3_procedures,4_security}.sql; do
   echo "Applying $f"
   $SQLCMD -S "$SQL_SERVER" -d "$SQL_DATABASE" "${AUTH[@]}" -b -i "$f"
 done
@@ -29,4 +31,4 @@ if [[ "${INIT_SQL_SKIP_GRANT:-false}" == "true" ]]; then
   exit 0
 fi
 echo "Granting database access to managed identity '$FUNCTION_APP_NAME'"
-$SQLCMD -S "$SQL_SERVER" -d "$SQL_DATABASE" "${AUTH[@]}" -b -v FunctionAppName="$FUNCTION_APP_NAME" -i infra/scripts/sql/grant-function-identity.sql
+$SQLCMD -S "$SQL_SERVER" -d "$SQL_DATABASE" "${AUTH[@]}" -b -v FunctionAppName="$FUNCTION_APP_NAME" -i "$ROOT/infra/scripts/sql/grant-function-identity.sql"

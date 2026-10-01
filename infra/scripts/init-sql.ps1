@@ -10,7 +10,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $auth = @('--authentication-method', 'ActiveDirectoryDefault')
-$files = @('collector/src/ChromeCollector.FunctionApp/Sql/001_tables.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/002_views.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/003_procedures.sql', 'collector/src/ChromeCollector.FunctionApp/Sql/004_security.sql')
+$root = Resolve-Path (Join-Path $PSScriptRoot '../..') # repo root, so the script works from any folder
+$files = @('001_tables.sql', '002_views.sql', '003_procedures.sql', '004_security.sql') | ForEach-Object { Join-Path $root "collector/src/ChromeCollector.FunctionApp/Sql/$_" }
 foreach ($f in $files) {
   Write-Host "Applying $f"
   sqlcmd -S $SqlServer -d $SqlDatabase @auth -b -i $f
@@ -18,5 +19,5 @@ foreach ($f in $files) {
 }
 if ($SkipGrant) { Write-Host 'Skipping grant-function-identity.sql (-SkipGrant)'; return }
 Write-Host "Granting database access to managed identity '$FunctionAppName'"
-sqlcmd -S $SqlServer -d $SqlDatabase @auth -b -v "FunctionAppName=$FunctionAppName" -i infra/scripts/sql/grant-function-identity.sql
+sqlcmd -S $SqlServer -d $SqlDatabase @auth -b -v "FunctionAppName=$FunctionAppName" -i (Join-Path $root 'infra/scripts/sql/grant-function-identity.sql')
 if ($LASTEXITCODE -ne 0) { throw 'sqlcmd failed on grant-function-identity.sql' }

@@ -42,8 +42,9 @@ if ($KeyVaultAdminObjectId) { $params += "keyVaultAdminObjectId=$KeyVaultAdminOb
 $params += "googleAdminEmail=$GoogleAdminEmail", "googleDeviceOrgUnit=$GoogleDeviceOrgUnit"
 if ($GoogleStudentIdSource) { $params += "googleStudentIdSource=$GoogleStudentIdSource" }
 az group create -n $ResourceGroup -l $Location | Out-Null
-az deployment group create -g $ResourceGroup -f infra/bicep/main.bicep `
-  -p '@infra/bicep/main.parameters.json' `
+$root = Resolve-Path (Join-Path $PSScriptRoot '../..') # repo root, so the script works from any folder
+az deployment group create -g $ResourceGroup -f (Join-Path $root 'infra/bicep/main.bicep') `
+  -p "@$(Join-Path $root 'infra/bicep/main.parameters.json')" `
   -p @params `
   --query properties.outputs -o json
 if ($LASTEXITCODE -ne 0) { throw 'Deployment failed.' }

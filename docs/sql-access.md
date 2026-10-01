@@ -53,6 +53,10 @@ Cloud Shell has the Azure CLI and is already signed in, but it does not include 
 own public IP:
 
 ```bash
+# 0. Get the scripts (the repo is public; your home folder is kept between sessions)
+git clone https://github.com/nrkey420/chromebook-agent-extension.git ~/chromebook-agent-extension
+cd ~/chromebook-agent-extension            # later: git pull to update
+
 # 1. Install go-sqlcmd into ~/bin (kept between Cloud Shell sessions)
 bash infra/scripts/install-sqlcmd.sh
 export PATH="$HOME/bin:$PATH"            # add this line to ~/.bashrc to keep it
@@ -69,7 +73,8 @@ SQL_SERVER=<sqlServerFqdn> SQL_DATABASE=<sqlDatabaseName> INVESTIGATORS_GROUP='.
 az sql server firewall-rule delete -g <resource-group> -s <sqlServerName> -n cloudshell
 ```
 
-The same applies to `init-sql.sh` and to `run-google-sync.sh` when it waits for results. `<sqlServerName>` is the
+The scripts find their `.sql` files relative to their own location, so they can be run from any folder, but
+they need the rest of the repo next to them: clone it rather than copying single scripts. The same applies to `init-sql.sh` and to `run-google-sync.sh` when it waits for results. `<sqlServerName>` is the
 short server name (deployment output `sqlServerName`); `SQL_SERVER` is the full name (`sqlServerFqdn`).
 
 ## Checking access
