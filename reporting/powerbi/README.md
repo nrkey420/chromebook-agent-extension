@@ -6,12 +6,21 @@ A Power BI Project (PBIP) with the triage and helpdesk pages from `docs/plans/re
 |---|---|
 | **Fleet overview** | Device count, reporting in the last 24 h / 7 d, coverage % (devices Google saw that the extension also reported from), never-reported and silent devices, devices by OU and status, extension versions, and a work list of devices needing attention. |
 | **Logins** | ChromeOS logins and extension sessions per day, users signed in, devices used, login failures, logins by hour × weekday, devices with the most users, users on the most devices, and a list of login failures. |
+| **User lookup** | Pick a user (type part of the email or student ID) and a date range: every device they signed in to, with first and last sign-in, Google logins, extension sessions and **Extension coverage**, then every sign-in. |
+| **Device lookup** | Pick a device (serial or asset tag) and a date range: every user who signed in to it, the same columns, then every sign-in. |
+| **IP lookup** | Pick an internal or public IP and a date range: which devices and users signed in at that IP, and Google account sign-ins from it. Only IPs recorded at sign-in; for any moment use `usp_IpLookup` (`docs/investigations.md`). |
 | **Device** (drill-through) | One device's details and everyone who signed in to it, with IPs. Right-click a serial number on another page → **Drill through → Device**. |
 | **User** (drill-through) | One user's details and every sign-in, with device and IPs. Right-click a user email → **Drill through → User**. |
 | **Pipeline health** | Google sync job status, collector errors per day and the latest errors. |
 
-It uses only device, user and login data: no URLs, page titles, searches or downloads. Web activity stays in the
-audited investigation procedures (`docs/investigations.md`).
+It uses only device, user and login data: no URLs, page titles, searches or downloads. Web activity and "who visited
+this site" stay in the audited investigation procedures (`usp_WebActivity`, `usp_SiteVisitors` in
+`docs/investigations.md`).
+
+On the lookup pages, the dropdowns have a search box: type part of the value. Clear a selection with the eraser icon
+on the slicer. With nothing selected the tables show everyone. **Extension coverage** says which sources saw the
+sign-ins; "Google only - extension not reporting" means Google saw the user sign in but the extension never
+reported, so there is no web activity for that user (usually the extension is not installed for their OU).
 
 ## Files
 

@@ -222,6 +222,15 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ActivityEvents_Domain_
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ActivityEvents_Search_Time')
   CREATE INDEX IX_ActivityEvents_Search_Time ON dbo.ActivityEvents (EventTimeUtc DESC) INCLUDE (SearchQuery, UserEmail) WHERE SearchQuery IS NOT NULL;
 GO
+-- Domain spelled backwards ('moc.elpmaxe.liam'), so "this site and its subdomains" is an index seek
+-- (DomainReversed LIKE 'moc.elpmaxe.%') instead of a scan of every domain. Used by usp_SiteVisitors.
+IF COL_LENGTH('dbo.ActivityEvents', 'DomainReversed') IS NULL
+  ALTER TABLE dbo.ActivityEvents ADD DomainReversed AS REVERSE(Domain) PERSISTED;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ActivityEvents_DomainReversed_Time')
+  CREATE INDEX IX_ActivityEvents_DomainReversed_Time ON dbo.ActivityEvents (DomainReversed, EventTimeUtc)
+    INCLUDE (Domain, UserEmail, DirectoryDeviceId, EventType);
+GO
 
 -- Point-in-time record of which device (and user) held which IP address.
 -- Written by the collector (extension heartbeats, session start, network changes)

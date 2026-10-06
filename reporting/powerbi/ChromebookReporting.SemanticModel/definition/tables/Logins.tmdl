@@ -37,6 +37,26 @@ table Logins
 		displayFolder: Logins
 		lineageTag: 84b4b513-fdea-ae87-9efe-8aee7a9e4ea2
 
+	measure 'First sign-in' = CALCULATE ( MIN ( Logins[EventTimeLocal] ), Logins[LoginEvent] IN { "LOGIN", "SESSION_START" }, Logins[Source] <> "GOOGLE_ACCOUNT" )
+		formatString: yyyy-mm-dd hh:nn
+		displayFolder: Logins
+		lineageTag: 3aad7a63-19e4-0827-ba9f-44d959a4e672
+
+	/// Which sources saw these sign-ins. "Google only" usually means the extension is not installed for that user's OU, so there is no web activity for them.
+	measure 'Extension coverage' =
+			VAR google = [ChromeOS logins]
+			VAR extension = [Extension sessions]
+			RETURN
+			    SWITCH (
+			        TRUE (),
+			        google > 0 && extension > 0, "Google and extension",
+			        google > 0, "Google only - extension not reporting",
+			        extension > 0, "Extension only",
+			        BLANK ()
+			    )
+		displayFolder: Logins
+		lineageTag: 3fce4483-97cc-b4cc-d9d0-b845b3c91ab9
+
 	column EventTimeUtc
 		dataType: dateTime
 		isHidden

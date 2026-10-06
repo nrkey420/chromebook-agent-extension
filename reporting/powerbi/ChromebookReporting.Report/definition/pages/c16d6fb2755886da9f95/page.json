@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "c16d6fb2755886da9f95",
+  "displayName": "Device lookup",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280
+}

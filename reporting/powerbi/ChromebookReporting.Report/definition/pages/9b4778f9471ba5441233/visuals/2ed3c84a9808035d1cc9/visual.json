@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "2ed3c84a9808035d1cc9",
+  "position": {
+    "x": 331.0,
+    "y": 84,
+    "z": 5000,
+    "width": 303.0,
+    "height": 96,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "First sign-in"
+                }
+              },
+              "queryRef": "Logins.First sign-in",
+              "nativeQueryRef": "First sign-in"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

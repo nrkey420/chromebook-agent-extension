@@ -146,9 +146,16 @@ public class InvestigationProcedureSqlTests(SqlTestDatabase db) : IClassFixture<
         return (sets[0], sets[1].Select(r => r.ToDictionary(kv => kv.Key, kv => kv.Value!)).ToList());
     }
 
-    private async Task<List<List<Dictionary<string, object?>>>> Exec(string procedure, params (string Name, object? Value)[] parameters)
+    private Task<List<List<Dictionary<string, object?>>>> Exec(string procedure, params (string Name, object? Value)[] parameters) =>
+        SqlProcedure.ExecAsync(db.ConnectionString, procedure, parameters);
+}
+
+/// <summary>Runs a stored procedure and returns every result set as rows of column name to value.</summary>
+public static class SqlProcedure
+{
+    public static async Task<List<List<Dictionary<string, object?>>>> ExecAsync(string connectionString, string procedure, params (string Name, object? Value)[] parameters)
     {
-        await using var conn = new SqlConnection(db.ConnectionString);
+        await using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync();
         await using var cmd = new SqlCommand(procedure, conn) { CommandType = CommandType.StoredProcedure };
         foreach (var (name, value) in parameters) cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);

@@ -5,7 +5,13 @@
 --   EXEC dbo.usp_UserTimeline @User = 'jdoe@district.org', @From = '2026-10-01', @To = '2026-10-02', @CaseNumber = 'IR-2026-0142';
 --   EXEC dbo.usp_FindDevice @Search = '5CD1234XYZ';
 --   EXEC dbo.usp_WebActivity @User = '123456', @From = '2026-09-28', @To = '2026-10-02', @CaseNumber = 'IR-2026-0142';
--- @CaseNumber is optional on the older procedures and required on usp_WebActivity.
+-- The lookups (dates optional: the last 30 days up to now when left out; @To is exclusive):
+--   EXEC dbo.usp_UserDevices @User = '123456', @From = '2026-09-01', @To = '2026-10-01';   -- devices a user signed in to
+--   EXEC dbo.usp_DeviceUsers @Device = '5CD1234XYZ';                                       -- users who signed in to a device
+--   EXEC dbo.usp_IpLookup @Ip = '10.20.30.*', @From = '2026-10-01 08:00', @To = '2026-10-01 12:00';  -- devices that had an IP
+--   EXEC dbo.usp_SiteVisitors @Domain = 'example.com', @CaseNumber = 'IR-2026-0142';       -- users who visited a site
+-- @CaseNumber is required on the procedures that return web content (usp_WebActivity, usp_SiteVisitors) and
+-- optional, but recorded, on the others.
 
 -- Records one investigation run; returns the audit row ID so the caller can add the row count.
 CREATE OR ALTER PROCEDURE dbo.usp_LogInvestigation
@@ -178,6 +184,7 @@ END;
 GO
 
 -- Web activity (page visits, searches, downloads) for a device and/or a user in a time window, for a case file.
+-- The window is [@From, @To); without dates, the last 30 days up to now.
 -- @Device: serial number, asset ID or directory device ID. @User: email address or student ID.
 -- Give either or both (both = that user on that device). @CaseNumber is required and recorded with the filters
 -- and row count in dbo.InvestigationAudit. @Domain matches the domain and its subdomains ('example.com' also
@@ -187,9 +194,9 @@ GO
 CREATE OR ALTER PROCEDURE dbo.usp_WebActivity
   @Device nvarchar(256) = NULL,
   @User nvarchar(320) = NULL,
-  @From datetime2,
-  @To datetime2,
-  @CaseNumber nvarchar(64),
+  @From datetime2 = NULL,
+  @To datetime2 = NULL,
+  @CaseNumber nvarchar(64) = NULL,
   @Domain nvarchar(256) = NULL,
   @IncludeDownloads bit = 1,
   @TimesAreUtc bit = 0,
@@ -205,7 +212,9 @@ BEGIN
 
   IF @CaseNumber IS NULL THROW 50001, 'A case number is required (@CaseNumber).', 1;
   IF @Device IS NULL AND @User IS NULL THROW 50002, 'Specify @Device and/or @User.', 1;
-  IF @From IS NULL OR @To IS NULL OR @From >= @To THROW 50003, '@From must be earlier than @To.', 1;
+  IF @To IS NULL SET @To = CASE WHEN @TimesAreUtc = 1 THEN SYSUTCDATETIME() ELSE dbo.fn_ToLocal(SYSUTCDATETIME()) END;
+  IF @From IS NULL SET @From = DATEADD(day, -30, @To);
+  IF @From >= @To THROW 50003, '@From must be earlier than @To.', 1;
   IF @MaxRows IS NULL OR @MaxRows < 1 OR @MaxRows > 1000000 THROW 50004, '@MaxRows must be between 1 and 1000000.', 1;
 
   DECLARE @FromUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @From ELSE dbo.fn_ToUtc(@From) END;
@@ -298,5 +307,399 @@ BEGIN
   FROM #Activity a
   GROUP BY COALESCE(a.Domain, '(none)')
   ORDER BY Visits DESC, Domain;
+END;
+GO
+
+-- Which devices did a user sign in to? @User: email address or student ID. Window [@From, @To); without dates, the
+-- last 30 days up to now. Evidence comes from Google (every managed sign-in) and from the extension (sessions that
+-- overlap the window, so FirstSignIn can be earlier than @From for a session that was already open).
+-- Result 1: one row per device, most recent first. Evidence = GOOGLE_AND_EXTENSION / GOOGLE_ONLY (the extension
+--           did not report: usually not installed for this user's OU) / EXTENSION_ONLY / FAILURES_ONLY.
+-- Result 2: every sign-in behind it, oldest first.
+CREATE OR ALTER PROCEDURE dbo.usp_UserDevices
+  @User nvarchar(320),
+  @From datetime2 = NULL,
+  @To datetime2 = NULL,
+  @TimesAreUtc bit = 0,
+  @CaseNumber nvarchar(64) = NULL
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SET @User = NULLIF(LTRIM(RTRIM(@User)), '');
+  IF @User IS NULL THROW 50002, 'Specify @User (email address or student ID).', 1;
+  IF @To IS NULL SET @To = CASE WHEN @TimesAreUtc = 1 THEN SYSUTCDATETIME() ELSE dbo.fn_ToLocal(SYSUTCDATETIME()) END;
+  IF @From IS NULL SET @From = DATEADD(day, -30, @To);
+  IF @From >= @To THROW 50003, '@From must be earlier than @To.', 1;
+
+  DECLARE @FromUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @From ELSE dbo.fn_ToUtc(@From) END;
+  DECLARE @ToUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @To ELSE dbo.fn_ToUtc(@To) END;
+  DECLARE @Email nvarchar(320) = COALESCE(
+    (SELECT TOP 1 UserEmail FROM dbo.GoogleUsers WHERE UserEmail = LOWER(@User) OR StudentId = @User ORDER BY CASE WHEN UserEmail = LOWER(@User) THEN 0 ELSE 1 END),
+    LOWER(@User));
+
+  DECLARE @AuditId bigint;
+  DECLARE @AuditParameters nvarchar(2000) = CONCAT('user=', @User, ';resolvedUser=', @Email,
+    ';fromUtc=', CONVERT(nvarchar(30), @FromUtc, 126), ';toUtc=', CONVERT(nvarchar(30), @ToUtc, 126));
+  EXEC dbo.usp_LogInvestigation N'usp_UserDevices', @CaseNumber, @AuditParameters, @AuditId OUTPUT;
+
+  SELECT s.* INTO #SignIns FROM dbo.fn_SignIns(@FromUtc, @ToUtc, @Email, NULL) s OPTION (RECOMPILE);
+
+  WITH perDevice AS (
+    SELECT
+      s.DirectoryDeviceId,
+      MIN(CASE WHEN s.SignInType <> 'LOGIN_FAILURE' THEN s.StartUtc END) AS FirstSignInUtc,
+      MAX(CASE WHEN s.SignInType <> 'LOGIN_FAILURE' THEN s.StartUtc END) AS LastSignInUtc,
+      SUM(CASE WHEN s.SignInType = 'LOGIN' THEN 1 ELSE 0 END) AS ChromeOsLogins,
+      SUM(CASE WHEN s.SignInType = 'SESSION' THEN 1 ELSE 0 END) AS ExtensionSessions,
+      SUM(CASE WHEN s.SignInType = 'LOGIN_FAILURE' THEN 1 ELSE 0 END) AS LoginFailures,
+      MAX(COALESCE(s.EndUtc, s.StartUtc)) AS LastActivityUtc
+    FROM #SignIns s
+    GROUP BY s.DirectoryDeviceId
+  )
+  SELECT
+    p.DirectoryDeviceId,
+    d.SerialNumber,
+    d.AssetId,
+    d.AnnotatedLocation,
+    d.OrgUnitPath AS DeviceOrgUnit,
+    dbo.fn_ToLocal(p.FirstSignInUtc) AS FirstSignInLocal,
+    dbo.fn_ToLocal(p.LastSignInUtc) AS LastSignInLocal,
+    p.FirstSignInUtc,
+    p.LastSignInUtc,
+    p.ChromeOsLogins,
+    p.ExtensionSessions,
+    p.LoginFailures,
+    CASE
+      WHEN p.ChromeOsLogins > 0 AND p.ExtensionSessions > 0 THEN 'GOOGLE_AND_EXTENSION'
+      WHEN p.ChromeOsLogins > 0 THEN 'GOOGLE_ONLY'
+      WHEN p.ExtensionSessions > 0 THEN 'EXTENSION_ONLY'
+      ELSE 'FAILURES_ONLY'
+    END AS Evidence,
+    ip.InternalIp AS LastInternalIp,
+    ip.PublicIp AS LastPublicIp
+  FROM perDevice p
+  LEFT JOIN dbo.Devices d ON d.DirectoryDeviceId = p.DirectoryDeviceId
+  OUTER APPLY (
+    SELECT TOP 1 s.InternalIp, s.PublicIp FROM #SignIns s
+    WHERE s.DirectoryDeviceId = p.DirectoryDeviceId AND (s.InternalIp IS NOT NULL OR s.PublicIp IS NOT NULL)
+    ORDER BY s.StartUtc DESC
+  ) ip
+  ORDER BY COALESCE(p.LastSignInUtc, p.LastActivityUtc) DESC, p.DirectoryDeviceId;
+
+  UPDATE dbo.InvestigationAudit SET RowsReturned = @@ROWCOUNT WHERE InvestigationAuditId = @AuditId;
+
+  SELECT
+    dbo.fn_ToLocal(s.StartUtc) AS StartLocal,
+    dbo.fn_ToLocal(s.EndUtc) AS EndLocal,
+    s.StartUtc,
+    s.EndUtc,
+    s.Source,
+    s.SignInType,
+    s.UserEmail,
+    u.StudentId,
+    d.SerialNumber,
+    d.AssetId,
+    d.AnnotatedLocation,
+    s.InternalIp,
+    s.PublicIp,
+    s.DirectoryDeviceId,
+    s.SessionId
+  FROM #SignIns s
+  LEFT JOIN dbo.GoogleUsers u ON u.UserEmail = s.UserEmail
+  LEFT JOIN dbo.Devices d ON d.DirectoryDeviceId = s.DirectoryDeviceId
+  ORDER BY s.StartUtc, s.Source;
+END;
+GO
+
+-- Which users signed in to a device? @Device: serial number, asset ID or directory device ID. Same window,
+-- evidence and result shape as usp_UserDevices, with one row per user (UserEmail NULL = an extension session
+-- whose user the extension could not identify).
+CREATE OR ALTER PROCEDURE dbo.usp_DeviceUsers
+  @Device nvarchar(256),
+  @From datetime2 = NULL,
+  @To datetime2 = NULL,
+  @TimesAreUtc bit = 0,
+  @CaseNumber nvarchar(64) = NULL
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SET @Device = NULLIF(LTRIM(RTRIM(@Device)), '');
+  IF @Device IS NULL THROW 50002, 'Specify @Device (serial number, asset ID or directory device ID).', 1;
+  IF @To IS NULL SET @To = CASE WHEN @TimesAreUtc = 1 THEN SYSUTCDATETIME() ELSE dbo.fn_ToLocal(SYSUTCDATETIME()) END;
+  IF @From IS NULL SET @From = DATEADD(day, -30, @To);
+  IF @From >= @To THROW 50003, '@From must be earlier than @To.', 1;
+
+  DECLARE @FromUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @From ELSE dbo.fn_ToUtc(@From) END;
+  DECLARE @ToUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @To ELSE dbo.fn_ToUtc(@To) END;
+
+  DECLARE @Ids TABLE (DirectoryDeviceId nvarchar(128) PRIMARY KEY);
+  INSERT @Ids (DirectoryDeviceId)
+  SELECT DirectoryDeviceId FROM dbo.Devices
+  WHERE DirectoryDeviceId = @Device OR SerialNumber = @Device OR AssetId = @Device;
+  -- Device may only be known from extension events.
+  IF NOT EXISTS (SELECT 1 FROM @Ids) INSERT @Ids (DirectoryDeviceId) VALUES (@Device);
+
+  DECLARE @AuditId bigint;
+  DECLARE @AuditParameters nvarchar(2000) = CONCAT('device=', @Device,
+    ';fromUtc=', CONVERT(nvarchar(30), @FromUtc, 126), ';toUtc=', CONVERT(nvarchar(30), @ToUtc, 126));
+  EXEC dbo.usp_LogInvestigation N'usp_DeviceUsers', @CaseNumber, @AuditParameters, @AuditId OUTPUT;
+
+  SELECT s.* INTO #SignIns
+  FROM @Ids i
+  CROSS APPLY dbo.fn_SignIns(@FromUtc, @ToUtc, NULL, i.DirectoryDeviceId) s
+  OPTION (RECOMPILE);
+
+  WITH perUser AS (
+    SELECT
+      s.UserEmail,
+      MIN(CASE WHEN s.SignInType <> 'LOGIN_FAILURE' THEN s.StartUtc END) AS FirstSignInUtc,
+      MAX(CASE WHEN s.SignInType <> 'LOGIN_FAILURE' THEN s.StartUtc END) AS LastSignInUtc,
+      SUM(CASE WHEN s.SignInType = 'LOGIN' THEN 1 ELSE 0 END) AS ChromeOsLogins,
+      SUM(CASE WHEN s.SignInType = 'SESSION' THEN 1 ELSE 0 END) AS ExtensionSessions,
+      SUM(CASE WHEN s.SignInType = 'LOGIN_FAILURE' THEN 1 ELSE 0 END) AS LoginFailures,
+      MAX(COALESCE(s.EndUtc, s.StartUtc)) AS LastActivityUtc
+    FROM #SignIns s
+    GROUP BY s.UserEmail
+  )
+  SELECT
+    p.UserEmail,
+    u.StudentId,
+    u.OrgUnitPath AS UserOrgUnit,
+    dbo.fn_ToLocal(p.FirstSignInUtc) AS FirstSignInLocal,
+    dbo.fn_ToLocal(p.LastSignInUtc) AS LastSignInLocal,
+    p.FirstSignInUtc,
+    p.LastSignInUtc,
+    p.ChromeOsLogins,
+    p.ExtensionSessions,
+    p.LoginFailures,
+    CASE
+      WHEN p.ChromeOsLogins > 0 AND p.ExtensionSessions > 0 THEN 'GOOGLE_AND_EXTENSION'
+      WHEN p.ChromeOsLogins > 0 THEN 'GOOGLE_ONLY'
+      WHEN p.ExtensionSessions > 0 THEN 'EXTENSION_ONLY'
+      ELSE 'FAILURES_ONLY'
+    END AS Evidence,
+    ip.InternalIp AS LastInternalIp,
+    ip.PublicIp AS LastPublicIp
+  FROM perUser p
+  LEFT JOIN dbo.GoogleUsers u ON u.UserEmail = p.UserEmail
+  OUTER APPLY (
+    SELECT TOP 1 s.InternalIp, s.PublicIp FROM #SignIns s
+    WHERE (s.UserEmail = p.UserEmail OR (s.UserEmail IS NULL AND p.UserEmail IS NULL))
+      AND (s.InternalIp IS NOT NULL OR s.PublicIp IS NOT NULL)
+    ORDER BY s.StartUtc DESC
+  ) ip
+  ORDER BY COALESCE(p.LastSignInUtc, p.LastActivityUtc) DESC, p.UserEmail;
+
+  UPDATE dbo.InvestigationAudit SET RowsReturned = @@ROWCOUNT WHERE InvestigationAuditId = @AuditId;
+
+  SELECT
+    dbo.fn_ToLocal(s.StartUtc) AS StartLocal,
+    dbo.fn_ToLocal(s.EndUtc) AS EndLocal,
+    s.StartUtc,
+    s.EndUtc,
+    s.Source,
+    s.SignInType,
+    s.UserEmail,
+    u.StudentId,
+    d.SerialNumber,
+    d.AssetId,
+    d.AnnotatedLocation,
+    s.InternalIp,
+    s.PublicIp,
+    s.DirectoryDeviceId,
+    s.SessionId
+  FROM #SignIns s
+  LEFT JOIN dbo.GoogleUsers u ON u.UserEmail = s.UserEmail
+  LEFT JOIN dbo.Devices d ON d.DirectoryDeviceId = s.DirectoryDeviceId
+  ORDER BY s.StartUtc, s.Source;
+END;
+GO
+
+-- Which devices (and users) had an IP address in a window? Unlike usp_WhoWasOnIp (a point in time +/- minutes),
+-- this takes any date range. @Ip: an exact IPv4/IPv6 address, or a prefix ending in * ('10.20.30.*', '10.20.*').
+-- Matches the device's internal (LAN) IP and its public (WAN) IP. Window [@From, @To); default the last 30 days.
+-- Note: a school's public IP is shared by every device behind it; use the internal IP to pin down one device.
+-- Result 1: one row per IP, device and user, with first/last seen. Result 2: Google sign-ins from the IP.
+CREATE OR ALTER PROCEDURE dbo.usp_IpLookup
+  @Ip nvarchar(64),
+  @From datetime2 = NULL,
+  @To datetime2 = NULL,
+  @TimesAreUtc bit = 0,
+  @CaseNumber nvarchar(64) = NULL
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SET @Ip = NULLIF(LTRIM(RTRIM(@Ip)), '');
+  IF @Ip IS NULL THROW 50002, 'Specify @Ip (an address, or a prefix ending in *).', 1;
+  -- Only address characters and one trailing *, so the value is safe to use in LIKE.
+  IF @Ip LIKE '%[^0-9A-Fa-f.:*]%' OR (CHARINDEX('*', @Ip) > 0 AND CHARINDEX('*', @Ip) <> LEN(@Ip))
+    THROW 50005, '@Ip must be an IP address, or a prefix followed by a single trailing * (for example 10.20.30.*).', 1;
+  IF @Ip LIKE '%*' AND LEN(@Ip) < 5
+    THROW 50005, 'An @Ip prefix needs at least 4 characters before the * (for example 10.2*).', 1;
+  IF @To IS NULL SET @To = CASE WHEN @TimesAreUtc = 1 THEN SYSUTCDATETIME() ELSE dbo.fn_ToLocal(SYSUTCDATETIME()) END;
+  IF @From IS NULL SET @From = DATEADD(day, -30, @To);
+  IF @From >= @To THROW 50003, '@From must be earlier than @To.', 1;
+
+  DECLARE @FromUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @From ELSE dbo.fn_ToUtc(@From) END;
+  DECLARE @ToUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @To ELSE dbo.fn_ToUtc(@To) END;
+  -- Exact match unless the value ends in *. Both forms are written as a LIKE pattern (no wildcards otherwise).
+  DECLARE @Pattern nvarchar(64) = CASE WHEN @Ip LIKE '%*' THEN LEFT(@Ip, LEN(@Ip) - 1) + '%' ELSE @Ip END;
+
+  DECLARE @AuditId bigint;
+  DECLARE @AuditParameters nvarchar(2000) = CONCAT('ip=', @Ip,
+    ';fromUtc=', CONVERT(nvarchar(30), @FromUtc, 126), ';toUtc=', CONVERT(nvarchar(30), @ToUtc, 126));
+  EXEC dbo.usp_LogInvestigation N'usp_IpLookup', @CaseNumber, @AuditParameters, @AuditId OUTPUT;
+
+  SELECT
+    m.MatchedOn,
+    m.MatchedIp,
+    h.DirectoryDeviceId,
+    h.SerialNumber,
+    h.AssetId,
+    h.AnnotatedLocation,
+    h.UserEmail,
+    h.StudentId,
+    h.UserSource,
+    dbo.fn_ToLocal(MIN(h.ObservedUtc)) AS FirstSeenLocal,
+    dbo.fn_ToLocal(MAX(h.ObservedUtc)) AS LastSeenLocal,
+    MIN(h.ObservedUtc) AS FirstSeenUtc,
+    MAX(h.ObservedUtc) AS LastSeenUtc,
+    COUNT(*) AS Observations
+  FROM dbo.vw_IpHistory h
+  CROSS APPLY (
+    SELECT
+      CASE WHEN h.InternalIp LIKE @Pattern OR h.InternalIpv6 LIKE @Pattern THEN 'INTERNAL' ELSE 'PUBLIC' END AS MatchedOn,
+      CASE WHEN h.InternalIp LIKE @Pattern THEN h.InternalIp
+           WHEN h.InternalIpv6 LIKE @Pattern THEN h.InternalIpv6
+           ELSE h.PublicIp END AS MatchedIp
+  ) m
+  WHERE (h.InternalIp LIKE @Pattern OR h.InternalIpv6 LIKE @Pattern OR h.PublicIp LIKE @Pattern)
+    AND h.ObservedUtc >= @FromUtc AND h.ObservedUtc < @ToUtc
+  GROUP BY m.MatchedOn, m.MatchedIp, h.DirectoryDeviceId, h.SerialNumber, h.AssetId, h.AnnotatedLocation,
+    h.UserEmail, h.StudentId, h.UserSource
+  ORDER BY m.MatchedIp, MIN(h.ObservedUtc)
+  OPTION (RECOMPILE);
+
+  UPDATE dbo.InvestigationAudit SET RowsReturned = @@ROWCOUNT WHERE InvestigationAuditId = @AuditId;
+
+  SELECT l.*
+  FROM dbo.vw_LoginHistory l
+  WHERE l.GoogleReportedIp LIKE @Pattern
+    AND l.EventTimeUtc >= @FromUtc AND l.EventTimeUtc < @ToUtc
+  ORDER BY l.EventTimeUtc
+  OPTION (RECOMPILE);
+END;
+GO
+
+-- Who visited a website? @Domain: 'example.com' (a pasted URL such as 'https://www.example.com/page' also works).
+-- Matches the domain and its subdomains ('mail.example.com', not 'notexample.com'); @IncludeSubdomains = 0 for the
+-- exact domain only. @UrlContains narrows to URLs containing that text (e.g. a video ID or a path).
+-- Window [@From, @To); default the last 30 days. @CaseNumber is required: this returns web content.
+-- Result 1: one row per user, most visits first (covers everything that matched).
+-- Result 2: the visits, oldest first (at most @MaxRows rows; Truncated = 1 on every row if there were more).
+CREATE OR ALTER PROCEDURE dbo.usp_SiteVisitors
+  @Domain nvarchar(2048),
+  @From datetime2 = NULL,
+  @To datetime2 = NULL,
+  @CaseNumber nvarchar(64) = NULL,
+  @UrlContains nvarchar(256) = NULL,
+  @IncludeSubdomains bit = 1,
+  @IncludeDownloads bit = 1,
+  @TimesAreUtc bit = 0,
+  @MaxRows int = 50000
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SET @CaseNumber = NULLIF(LTRIM(RTRIM(@CaseNumber)), '');
+  SET @UrlContains = NULLIF(LTRIM(RTRIM(@UrlContains)), '');
+  -- Accept a pasted URL: drop the scheme, path, port and a leading "www.".
+  SET @Domain = LOWER(NULLIF(LTRIM(RTRIM(@Domain)), ''));
+  IF CHARINDEX('://', @Domain) > 0 SET @Domain = SUBSTRING(@Domain, CHARINDEX('://', @Domain) + 3, 2048);
+  IF CHARINDEX('/', @Domain) > 0 SET @Domain = LEFT(@Domain, CHARINDEX('/', @Domain) - 1);
+  IF CHARINDEX(':', @Domain) > 0 SET @Domain = LEFT(@Domain, CHARINDEX(':', @Domain) - 1);
+  IF @Domain LIKE 'www.%' SET @Domain = SUBSTRING(@Domain, 5, 2048);
+  SET @Domain = NULLIF(@Domain, '');
+
+  IF @CaseNumber IS NULL THROW 50001, 'A case number is required (@CaseNumber).', 1;
+  IF @Domain IS NULL THROW 50002, 'Specify @Domain (for example example.com).', 1;
+  -- Host names only (letters, digits, dots, hyphens), so the value is safe to use in LIKE.
+  IF LEN(@Domain) > 253 OR @Domain LIKE '%[^a-z0-9.-]%' COLLATE Latin1_General_BIN
+    THROW 50005, '@Domain must be a host name such as example.com.', 1;
+  IF @To IS NULL SET @To = CASE WHEN @TimesAreUtc = 1 THEN SYSUTCDATETIME() ELSE dbo.fn_ToLocal(SYSUTCDATETIME()) END;
+  IF @From IS NULL SET @From = DATEADD(day, -30, @To);
+  IF @From >= @To THROW 50003, '@From must be earlier than @To.', 1;
+  IF @MaxRows IS NULL OR @MaxRows < 1 OR @MaxRows > 1000000 THROW 50004, '@MaxRows must be between 1 and 1000000.', 1;
+
+  DECLARE @FromUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @From ELSE dbo.fn_ToUtc(@From) END;
+  DECLARE @ToUtc datetime2 = CASE WHEN @TimesAreUtc = 1 THEN @To ELSE dbo.fn_ToUtc(@To) END;
+  -- Subdomains via the reversed domain: 'moc.elpmaxe' and 'moc.elpmaxe.%' are both index seeks.
+  DECLARE @Reversed nvarchar(256) = REVERSE(@Domain);
+  DECLARE @SubdomainPattern nvarchar(260) = CASE WHEN @IncludeSubdomains = 1 THEN @Reversed + N'.%' END;
+  DECLARE @UrlPattern nvarchar(300) = CASE WHEN @UrlContains IS NULL THEN NULL
+    ELSE '%' + REPLACE(REPLACE(REPLACE(@UrlContains, '[', '[[]'), '_', '[_]'), '%', '[%]') + '%' END;
+
+  DECLARE @AuditId bigint;
+  DECLARE @AuditParameters nvarchar(2000) = CONCAT('domain=', @Domain, ';includeSubdomains=', @IncludeSubdomains,
+    ';urlContains=', @UrlContains, ';fromUtc=', CONVERT(nvarchar(30), @FromUtc, 126), ';toUtc=', CONVERT(nvarchar(30), @ToUtc, 126),
+    ';includeDownloads=', @IncludeDownloads, ';maxRows=', @MaxRows);
+  EXEC dbo.usp_LogInvestigation N'usp_SiteVisitors', @CaseNumber, @AuditParameters, @AuditId OUTPUT;
+
+  SELECT a.ActivityEventId, a.EventTimeUtc, a.EventType, a.UserEmail, a.DirectoryDeviceId, a.Domain
+  INTO #Visits
+  FROM dbo.ActivityEvents a
+  WHERE (a.DomainReversed = @Reversed OR a.DomainReversed LIKE @SubdomainPattern)
+    AND a.EventTimeUtc >= @FromUtc AND a.EventTimeUtc < @ToUtc
+    AND (a.EventType = 'NAVIGATION' OR (@IncludeDownloads = 1 AND a.EventType = 'DOWNLOAD'))
+    AND (@UrlPattern IS NULL OR a.Url LIKE @UrlPattern)
+  OPTION (RECOMPILE);
+
+  DECLARE @Total int = @@ROWCOUNT;
+  DECLARE @Returned int = CASE WHEN @Total > @MaxRows THEN @MaxRows ELSE @Total END;
+  UPDATE dbo.InvestigationAudit SET RowsReturned = @Returned WHERE InvestigationAuditId = @AuditId;
+
+  SELECT
+    v.UserEmail,
+    u.StudentId,
+    u.OrgUnitPath AS UserOrgUnit,
+    SUM(CASE WHEN v.EventType = 'NAVIGATION' THEN 1 ELSE 0 END) AS Visits,
+    SUM(CASE WHEN v.EventType = 'DOWNLOAD' THEN 1 ELSE 0 END) AS Downloads,
+    COUNT(DISTINCT v.DirectoryDeviceId) AS Devices,
+    COUNT(DISTINCT v.Domain) AS Domains,
+    dbo.fn_ToLocal(MIN(v.EventTimeUtc)) AS FirstVisitLocal,
+    dbo.fn_ToLocal(MAX(v.EventTimeUtc)) AS LastVisitLocal,
+    MIN(v.EventTimeUtc) AS FirstVisitUtc,
+    MAX(v.EventTimeUtc) AS LastVisitUtc
+  FROM #Visits v
+  LEFT JOIN dbo.GoogleUsers u ON u.UserEmail = v.UserEmail
+  GROUP BY v.UserEmail, u.StudentId, u.OrgUnitPath
+  ORDER BY Visits DESC, Downloads DESC, v.UserEmail;
+
+  SELECT TOP (@MaxRows)
+    v.EventTimeUtc,
+    dbo.fn_ToLocal(v.EventTimeUtc) AS EventTimeLocal,
+    v.EventType,
+    v.UserEmail,
+    u.StudentId,
+    d.SerialNumber,
+    d.AssetId,
+    d.AnnotatedLocation,
+    a.Domain,
+    a.Url,
+    a.Title,
+    a.Transition,
+    a.DownloadFileName,
+    a.DownloadDanger,
+    a.InternalIp,
+    a.PublicIp,
+    a.DirectoryDeviceId,
+    a.SessionId,
+    a.EventId,
+    CAST(CASE WHEN @Total > @MaxRows THEN 1 ELSE 0 END AS bit) AS Truncated,
+    @CaseNumber AS CaseNumber
+  FROM #Visits v
+  JOIN dbo.ActivityEvents a ON a.ActivityEventId = v.ActivityEventId
+  LEFT JOIN dbo.GoogleUsers u ON u.UserEmail = v.UserEmail
+  LEFT JOIN dbo.Devices d ON d.DirectoryDeviceId = v.DirectoryDeviceId
+  ORDER BY v.EventTimeUtc, v.ActivityEventId;
 END;
 GO

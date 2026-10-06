@@ -1,9 +1,11 @@
 -- Database roles for people. Idempotent: safe to re-run. Run after 001-003.
 -- Entra groups are added to these roles by infra/scripts/grant-sql-roles.* (docs/sql-access.md).
 --
---   ChromebookDeviceReaders   helpdesk / ops: devices, users, logins, sync and ingestion health. No web content.
+--   ChromebookDeviceReaders   helpdesk / ops: devices, users, logins (incl. usp_UserDevices / usp_DeviceUsers),
+--                             sync and ingestion health. No web content, no IP history.
 --   ChromebookInvestigators   IR analysts: the above plus IP history, and every investigation procedure.
---                             Web content only through the audited procedures (usp_WebActivity, usp_*Timeline).
+--                             Web content only through the audited procedures (usp_WebActivity, usp_SiteVisitors,
+--                             usp_*Timeline).
 --   ChromebookAuditReviewers  IR lead / compliance: read dbo.InvestigationAudit.
 --
 -- The views and procedures are owned by dbo, so ownership chaining lets them read the tables without the caller
@@ -23,6 +25,8 @@ GRANT SELECT ON dbo.vw_LoginHistory TO ChromebookDeviceReaders;
 GRANT SELECT ON dbo.SyncState TO ChromebookDeviceReaders;
 GRANT SELECT ON dbo.IngestionErrors TO ChromebookDeviceReaders;
 GRANT EXECUTE ON dbo.usp_FindDevice TO ChromebookDeviceReaders;
+GRANT EXECUTE ON dbo.usp_UserDevices TO ChromebookDeviceReaders;
+GRANT EXECUTE ON dbo.usp_DeviceUsers TO ChromebookDeviceReaders;
 GO
 
 -- Investigators.
@@ -35,6 +39,10 @@ GRANT EXECUTE ON dbo.usp_WhoWasOnIp TO ChromebookInvestigators;
 GRANT EXECUTE ON dbo.usp_DeviceTimeline TO ChromebookInvestigators;
 GRANT EXECUTE ON dbo.usp_UserTimeline TO ChromebookInvestigators;
 GRANT EXECUTE ON dbo.usp_WebActivity TO ChromebookInvestigators;
+GRANT EXECUTE ON dbo.usp_UserDevices TO ChromebookInvestigators;
+GRANT EXECUTE ON dbo.usp_DeviceUsers TO ChromebookInvestigators;
+GRANT EXECUTE ON dbo.usp_IpLookup TO ChromebookInvestigators;
+GRANT EXECUTE ON dbo.usp_SiteVisitors TO ChromebookInvestigators;
 GO
 
 -- Audit reviewers.
