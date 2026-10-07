@@ -226,6 +226,56 @@ OUTER APPLY (
 ) ip;
 GO
 
+-- Device sign-ins in [@FromUtc, @ToUtc), for one user and/or one device (NULL = any). Two kinds of evidence:
+--   GOOGLE_CHROMEOS  Google's ChromeOS login (and failed login) audit events, for every managed device and user.
+--   EXTENSION        The extension's sessions that overlap the window (so a session that began earlier is included);
+--                    only where the extension is installed for that user.
+-- A sign-in Google saw but the extension did not usually means the extension is not installed for that user's OU.
+-- Used by usp_UserDevices and usp_DeviceUsers; not granted to any role.
+CREATE OR ALTER FUNCTION dbo.fn_SignIns (
+  @FromUtc datetime2,
+  @ToUtc datetime2,
+  @UserEmail nvarchar(320),
+  @DirectoryDeviceId nvarchar(128)
+)
+RETURNS TABLE
+AS
+RETURN
+  SELECT
+    'GOOGLE_CHROMEOS' AS Source,
+    CASE e.EventName WHEN 'CHROME_OS_LOGIN_FAILURE_EVENT' THEN 'LOGIN_FAILURE' ELSE 'LOGIN' END AS SignInType,
+    COALESCE(e.UserEmail, e.ActorEmail) AS UserEmail,
+    e.DirectoryDeviceId,
+    e.EventTimeUtc AS StartUtc,
+    CAST(NULL AS datetime2) AS EndUtc,
+    CAST(NULL AS nvarchar(64)) AS InternalIp,
+    e.IpAddress AS PublicIp,
+    CAST(NULL AS uniqueidentifier) AS SessionId
+  FROM dbo.GoogleAuditEvents e
+  WHERE e.Application = 'chrome'
+    AND e.EventName IN ('CHROME_OS_LOGIN_EVENT', 'CHROME_OS_LOGIN_FAILURE_EVENT')
+    AND e.DirectoryDeviceId IS NOT NULL
+    AND e.EventTimeUtc >= @FromUtc AND e.EventTimeUtc < @ToUtc
+    AND (@UserEmail IS NULL OR e.UserEmail = @UserEmail OR (e.UserEmail IS NULL AND e.ActorEmail = @UserEmail))
+    AND (@DirectoryDeviceId IS NULL OR e.DirectoryDeviceId = @DirectoryDeviceId)
+  UNION ALL
+  SELECT
+    'EXTENSION',
+    'SESSION',
+    s.UserEmail,
+    s.DirectoryDeviceId,
+    COALESCE(s.LoginUtc, s.SessionStartUtc),
+    COALESCE(s.LogoutUtc, s.SessionEndUtc),
+    COALESCE(s.LastInternalIp, s.FirstInternalIp),
+    COALESCE(s.LastPublicIp, s.FirstPublicIp),
+    s.SessionId
+  FROM dbo.Sessions s
+  WHERE s.SessionStartUtc < @ToUtc
+    AND COALESCE(s.SessionEndUtc, s.LastSeenUtc) >= @FromUtc
+    AND (@UserEmail IS NULL OR s.UserEmail = @UserEmail)
+    AND (@DirectoryDeviceId IS NULL OR s.DirectoryDeviceId = @DirectoryDeviceId);
+GO
+
 -- Websites visited.
 CREATE OR ALTER VIEW dbo.vw_WebActivity
 AS

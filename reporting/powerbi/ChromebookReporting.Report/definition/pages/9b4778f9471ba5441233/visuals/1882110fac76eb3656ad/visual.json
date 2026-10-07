@@ -1,0 +1,189 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "name": "1882110fac76eb3656ad",
+  "position": {
+    "x": 16,
+    "y": 440,
+    "z": 9000,
+    "width": 1248,
+    "height": 264,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "EventTimeLocal"
+                }
+              },
+              "queryRef": "Logins.EventTimeLocal",
+              "nativeQueryRef": "EventTimeLocal"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Source"
+                }
+              },
+              "queryRef": "Logins.Source",
+              "nativeQueryRef": "Source"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "LoginEvent"
+                }
+              },
+              "queryRef": "Logins.LoginEvent",
+              "nativeQueryRef": "LoginEvent"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "SerialNumber"
+                }
+              },
+              "queryRef": "Logins.SerialNumber",
+              "nativeQueryRef": "SerialNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "AssetId"
+                }
+              },
+              "queryRef": "Logins.AssetId",
+              "nativeQueryRef": "AssetId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "AnnotatedLocation"
+                }
+              },
+              "queryRef": "Logins.AnnotatedLocation",
+              "nativeQueryRef": "AnnotatedLocation"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "InternalIp"
+                }
+              },
+              "queryRef": "Logins.InternalIp",
+              "nativeQueryRef": "InternalIp"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "PublicIp"
+                }
+              },
+              "queryRef": "Logins.PublicIp",
+              "nativeQueryRef": "PublicIp"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Logins"
+                    }
+                  },
+                  "Property": "Detail"
+                }
+              },
+              "queryRef": "Logins.Detail",
+              "nativeQueryRef": "Detail"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Logins"
+                  }
+                },
+                "Property": "EventTimeLocal"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Every sign-in, sign-out and failure (newest first)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

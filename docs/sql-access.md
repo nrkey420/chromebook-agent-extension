@@ -6,8 +6,8 @@ the schema. Adding groups to the roles is a one-time step a person runs (below).
 
 | Role | For | Can | Cannot |
 |---|---|---|---|
-| `ChromebookDeviceReaders` | Helpdesk, ops, fleet/login dashboards | `vw_Devices`, `vw_Users`, `vw_LoginHistory`, `SyncState`, `IngestionErrors`; `usp_FindDevice` | See any URL, title, search or download; IP history; investigation timelines |
-| `ChromebookInvestigators` | IR analysts | Everything device readers can, plus `vw_IpHistory` and every investigation procedure (`usp_WebActivity`, `usp_DeviceTimeline`, `usp_UserTimeline`, `usp_WhoWasOnIp`, `usp_FindDevice`) | Read web content directly (`ActivityEvents`, `vw_WebActivity`, `vw_SearchActivity`, `vw_Downloads`, `vw_InvestigationTimeline`); read or change the audit trail |
+| `ChromebookDeviceReaders` | Helpdesk, ops, fleet/login dashboards | `vw_Devices`, `vw_Users`, `vw_LoginHistory`, `SyncState`, `IngestionErrors`; `usp_FindDevice`, `usp_UserDevices`, `usp_DeviceUsers` | See any URL, title, search or download; IP history; investigation timelines |
+| `ChromebookInvestigators` | IR analysts | Everything device readers can, plus `vw_IpHistory` and every investigation procedure (`usp_WebActivity`, `usp_SiteVisitors`, `usp_IpLookup`, `usp_UserDevices`, `usp_DeviceUsers`, `usp_DeviceTimeline`, `usp_UserTimeline`, `usp_WhoWasOnIp`, `usp_FindDevice`) | Read web content directly (`ActivityEvents`, `vw_WebActivity`, `vw_SearchActivity`, `vw_Downloads`, `vw_InvestigationTimeline`); read or change the audit trail |
 | `ChromebookAuditReviewers` | IR lead, compliance | Read `InvestigationAudit` | Change it; anything else |
 
 All three can use `dbo.fn_ToLocal` / `dbo.fn_ToUtc` in their own queries.

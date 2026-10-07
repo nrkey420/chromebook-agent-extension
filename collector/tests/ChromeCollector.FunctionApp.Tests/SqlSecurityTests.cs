@@ -11,6 +11,11 @@ public class SqlSecurityTests(SqlTestDatabase db) : IClassFixture<SqlTestDatabas
 {
     private const string WebActivity =
         "EXEC dbo.usp_WebActivity @User = 'x@district.org', @From = '2026-10-01', @To = '2026-10-02', @TimesAreUtc = 1, @CaseNumber = 'SEC-1'";
+    private const string UserDevices = "EXEC dbo.usp_UserDevices @User = 'x@district.org'";
+    private const string DeviceUsers = "EXEC dbo.usp_DeviceUsers @Device = 'SN-1', @From = '2026-10-01', @To = '2026-10-02'";
+    private const string IpLookup = "EXEC dbo.usp_IpLookup @Ip = '10.0.0.*'";
+    private const string SiteVisitors = "EXEC dbo.usp_SiteVisitors @Domain = 'example.com', @CaseNumber = 'SEC-2'";
+    private const string SignInsFunction = "SELECT * FROM dbo.fn_SignIns('2026-10-01', '2026-10-02', NULL, NULL)";
     private const string DeviceTimeline =
         "EXEC dbo.usp_DeviceTimeline @Device = 'SN-1', @From = '2026-10-01', @To = '2026-10-02', @TimesAreUtc = 1";
 
@@ -42,6 +47,11 @@ public class SqlSecurityTests(SqlTestDatabase db) : IClassFixture<SqlTestDatabas
     [InlineData("test_helpdesk", "SELECT TOP 1 * FROM dbo.IngestionErrors", true)]
     [InlineData("test_helpdesk", "EXEC dbo.usp_FindDevice @Search = 'SN-1'", true)]
     [InlineData("test_helpdesk", "SELECT dbo.fn_ToLocal(SYSUTCDATETIME())", true)]
+    [InlineData("test_helpdesk", UserDevices, true)]
+    [InlineData("test_helpdesk", DeviceUsers, true)]
+    [InlineData("test_helpdesk", IpLookup, false)]
+    [InlineData("test_helpdesk", SiteVisitors, false)]
+    [InlineData("test_helpdesk", SignInsFunction, false)]
     [InlineData("test_helpdesk", WebActivity, false)]
     [InlineData("test_helpdesk", DeviceTimeline, false)]
     [InlineData("test_helpdesk", "SELECT TOP 1 * FROM dbo.vw_IpHistory", false)]
@@ -54,6 +64,10 @@ public class SqlSecurityTests(SqlTestDatabase db) : IClassFixture<SqlTestDatabas
     [InlineData("test_analyst", DeviceTimeline, true)]
     [InlineData("test_analyst", "EXEC dbo.usp_UserTimeline @User = 'x', @From = '2026-10-01', @To = '2026-10-02'", true)]
     [InlineData("test_analyst", "EXEC dbo.usp_WhoWasOnIp @Ip = '10.0.0.1', @At = '2026-10-01T09:00:00'", true)]
+    [InlineData("test_analyst", UserDevices, true)]
+    [InlineData("test_analyst", DeviceUsers, true)]
+    [InlineData("test_analyst", IpLookup, true)]
+    [InlineData("test_analyst", SiteVisitors, true)]
     [InlineData("test_analyst", "SELECT TOP 1 * FROM dbo.vw_IpHistory", true)]
     [InlineData("test_analyst", "SELECT TOP 1 * FROM dbo.vw_LoginHistory", true)]
     [InlineData("test_analyst", "SELECT TOP 1 * FROM dbo.ActivityEvents", false)]
@@ -76,6 +90,8 @@ public class SqlSecurityTests(SqlTestDatabase db) : IClassFixture<SqlTestDatabas
     [InlineData("test_reviewer", "DELETE dbo.InvestigationAudit", false)]
     [InlineData("test_reviewer", WebActivity, false)]
     [InlineData("test_reviewer", "SELECT TOP 1 * FROM dbo.vw_Devices", false)]
+    [InlineData("test_reviewer", UserDevices, false)]
+    [InlineData("test_reviewer", SiteVisitors, false)]
     public async Task RolePermissions(string user, string sql, bool allowed)
     {
         var act = () => RunAsAsync(user, sql);
